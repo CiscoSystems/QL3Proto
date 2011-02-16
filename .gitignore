@@ -4,5 +4,5 @@ build/*
 build-stamp
 run_tests.err.log
 run_tests.log
-tests/
+#tests/
 .quantum-venv/
