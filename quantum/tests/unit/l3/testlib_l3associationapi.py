@@ -15,7 +15,6 @@
 #    under the License.
 #    @author: Atul Gaikwad, Cisco Systems, Inc.
 """Testlib for L3Association API tests"""
-# pylint: disable-msg=W0613
 
 import webob
 
@@ -33,61 +32,61 @@ def create_request(path, body, content_type, method='GET'):
 
 
 def new_association_request(tenant_id, subnet_id, routetable_id,
-                            format='xml', custom_req_body=None):
+                            req_format='xml', custom_req_body=None):
     """creting request for new association"""
     method = 'PUT'
-    path = "/tenants/%(tenant_id)s/subnets" \
-           "/%(subnet_id)s/association.%(format)s" % locals()
+    path = "/tenants/" + str(tenant_id) + "/subnets/" +\
+           str(subnet_id) + "/association.%(req_format)s" % locals()
     data = custom_req_body or {
             'association': {'routetable_id': '%s' % routetable_id}}
-    content_type = "application/%s" % format
+    content_type = "application/%s" % req_format
     body = Serializer().serialize(data, content_type)
     return create_request(path, body, content_type, method)
 
 
 def _show_association_request(tenant_id, subnet_id,
-                              format='xml', detail=False):
+                              req_format='xml'):
     """creting request for show association"""
     method = 'GET'
-    detail_str = detail and '/detail' or ''
-    path = "/tenants/%(tenant_id)s/subnets" \
-           "/%(subnet_id)s/association%(detail_str)s.%(format)s" % locals()
-    content_type = "application/%s" % format
+    path = "/tenants/" + str(tenant_id) + "/subnets/" +\
+           str(subnet_id) + "/association.%(req_format)s" % locals()
+    content_type = "application/%s" % req_format
     return create_request(path, None, content_type, method)
 
 
-def show_association_request(tenant_id, subnet_id, format='xml'):
+def show_association_request(tenant_id, subnet_id, req_format='xml'):
     """creting request for show association"""
-    return _show_association_request(tenant_id, subnet_id, format)
+    return _show_association_request(tenant_id, subnet_id, req_format)
 
 
 def association_delete_request(tenant_id, subnet_id,
-                               routetable_id, format='xml'):
+                               req_format='xml'):
     """creting request for deleting association"""
     method = 'DELETE'
-    path = "/tenants/%(tenant_id)s/subnets" \
-           "/%(subnet_id)s/association.%(format)s" % locals()
-    content_type = "application/%s" % format
+    path = "/tenants/" + str(tenant_id) + "/subnets/" +\
+           str(subnet_id) + "/association.%(req_format)s" % locals()
+    content_type = "application/%s" % req_format
     return create_request(path, None, content_type, method)
 
 
 def new_subnet_request(tenant_id, cidr='10.0.0.0/16',
-                        format='xml', custom_req_body=None):
+                        req_format='xml', custom_req_body=None):
     """creting request for a new subnet"""
     method = 'POST'
-    path = "/tenants/%(tenant_id)s/subnets.%(format)s" % locals()
+    path = "/tenants/" + str(tenant_id) + "/subnets.%(req_format)s" % locals()
     data = custom_req_body or {'subnet': {'cidr': '%s' % cidr}}
-    content_type = "application/%s" % format
+    content_type = "application/%s" % req_format
     body = Serializer().serialize(data, content_type)
     return create_request(path, body, content_type, method)
 
 
-def new_routetable_request(tenant_id, format='xml', custom_req_body=None):
+def new_routetable_request(tenant_id, req_format='xml', custom_req_body=None):
     """creting request for a new routetable"""
     label = 'label'
     method = 'POST'
-    path = "/tenants/%(tenant_id)s/routetables.%(format)s" % locals()
+    path = "/tenants/" + str(tenant_id) + "/routetables.%(req_format)s"\
+            % locals()
     data = custom_req_body or {'routetable': {'label': '%s' % label}}
-    content_type = "application/%s" % format
+    content_type = "application/%s" % req_format
     body = Serializer().serialize(data, content_type)
     return create_request(path, body, content_type, method)

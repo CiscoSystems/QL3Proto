@@ -22,9 +22,6 @@ import re
 
 import quantum.tests.unit.l3.testlib_l3targetapi as testlib
 
-from quantum import api as server
-from quantum.common.test_lib import test_config
-from quantum.db import api as db
 from quantum.tests.unit.l3._test_l3api import L3AbstractAPITest
 from quantum.wsgi import XMLDeserializer, JSONDeserializer
 
@@ -36,29 +33,29 @@ REGEX = "([a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12})"
 
 class L3TargetAbstractAPITest(L3AbstractAPITest):
     """L3 Target tests class"""
-    def _test_list_targets(self, format):
+    def _test_list_targets(self, req_format):
         """Testing list targets"""
-        LOG.debug("_test_list_targets - format:%s - START", format)
-        content_type = "application/%s" % format
+        LOG.debug("_test_list_targets - req_format:%s - START", req_format)
+        content_type = "application/%s" % req_format
         LOG.debug("Creating routetable")
         routetable_req = testlib.new_routetable_request(self.tenant_id,
-                                                        format,
+                                                        req_format,
                                                         None)
         routetable_res = routetable_req.get_response(self.api)
         routetable_id = (re.findall(REGEX, str(routetable_res)))[0]
-        content_type = "application/%s" % format
+        content_type = "application/%s" % req_format
         list_target_req = testlib.target_list_request(self.tenant_id,
                                                       routetable_id,
-                                                      format)
+                                                      req_format)
         list_target_res = list_target_req.get_response(self.api)
         self.assertEqual(list_target_res.status_int, 200)
         target_data = self._target_deserializers[content_type].\
                 deserialize(list_target_res.body)['body']
-        if(format == 'xml'):
+        if(req_format == 'xml'):
             self.assertEqual(len(target_data['targets']), 1)
-        if(format == 'json'):
+        if(req_format == 'json'):
             self.assertEqual(len(target_data['targets']), 3)
-        LOG.debug("_test_list_targets - format:%s - END", format)
+        LOG.debug("_test_list_targets - req_format:%s - END", req_format)
 
     def setUp(self, api_router_klass, xml_metadata_dict):
         """setUp for the test"""

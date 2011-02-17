@@ -18,73 +18,72 @@
 """Testing L3 Association CLI"""
 
 import logging
-import unittest
-import re
 
-from quantum.common.serializer import Serializer
-from quantum.client.l3client.l3client import Client
-from quantum.tests.unit.l3.test_l3clientlib import *
+from quantum.tests.unit.l3.test_l3clientlib import L3CLIAPITest
 
 LOG = logging.getLogger(__name__)
+
+TENANT_1 = 'tenant1'
+TENANT_2 = 'tenant2'
 
 
 class L3AssociationCLIAPITest(L3CLIAPITest):
     """L3 Association tests class"""
-    def _test_show_association(self, tenant=TENANT_1, format='json',
+    def _test_show_association(self, tenant=TENANT_1, req_format='json',
                                status=200):
         """Test to show available association"""
         LOG.debug("_test_show_association - tenant:%s "\
-                  "- format:%s - START", format, tenant)
+                  "- format:%s - START", req_format, tenant)
 
         self._assert_sanity(self.client.show_subnet_association,
                             status,
                             "GET",
                             "subnets/001/association",
                             data=["001"],
-                            params={'tenant': tenant, 'format': format})
+                            params={'tenant': tenant, 'format': req_format})
 
         LOG.debug("_test_show_association - tenant:%s "\
-                  "- format:%s - END", format, tenant)
+                  "- format:%s - END", req_format, tenant)
 
     def _test_create_association(self, tenant=TENANT_1,
-                                 format='json', status=200):
+                                 req_format='json', status=200):
         """Test creating a new association"""
         LOG.debug("_test_create_association - tenant:%s "\
-                  "- format:%s - START", format, tenant)
+                  "- format:%s - START", req_format, tenant)
 
         self._assert_sanity(self.client.associate_subnet,
                             status,
                             "PUT",
                             "subnets/001/association",
                             data=["001"],
-                            params={'tenant': tenant, 'format': format})
+                            params={'tenant': tenant, 'format': req_format})
 
         LOG.debug("_test_create_association - tenant:%s "\
-                  "- format:%s - END", format, tenant)
+                  "- format:%s - END", req_format, tenant)
 
     def _test_delete_association(self, tenant=TENANT_1,
-                                 format='json', status=200):
+                                 req_format='json', status=200):
         """Test deleting association"""
         LOG.debug("_test_delete_association - tenant:%s "\
-                  "- format:%s - START", format, tenant)
+                  "- format:%s - START", req_format, tenant)
 
         self._assert_sanity(self.client.disassociate_subnet,
                             status,
                             "DELETE",
                             "subnets/001/association",
                             data=["001"],
-                            params={'tenant': tenant, 'format': format})
+                            params={'tenant': tenant, 'format': req_format})
 
         LOG.debug("_test_delete_association - tenant:%s "\
-                  "- format:%s - END", format, tenant)
+                  "- format:%s - END", req_format, tenant)
 
     def test_show_association_json(self):
         """Test to show available association with json"""
-        self._test_show_association(format='json')
+        self._test_show_association(req_format='json')
 
     def test_show_association_xml(self):
         """Test to show available association with xml"""
-        self._test_show_association(format='xml')
+        self._test_show_association(req_format='xml')
 
     def test_show_assoc_alt_tenant(self):
         """Test to show available association with alternate tenant"""
@@ -104,11 +103,11 @@ class L3AssociationCLIAPITest(L3CLIAPITest):
 
     def test_create_association_json(self):
         """Test creating association with json"""
-        self._test_create_association(format='json')
+        self._test_create_association(req_format='json')
 
     def test_create_association_xml(self):
         """Test creating association with xml"""
-        self._test_create_association(format='xml')
+        self._test_create_association(req_format='xml')
 
     def test_create_assoc_alt_tenant(self):
         """Test creating association with alternate tenant"""
@@ -128,11 +127,11 @@ class L3AssociationCLIAPITest(L3CLIAPITest):
 
     def test_delete_association_json(self):
         """Test deleting association with json"""
-        self._test_delete_association(format='json')
+        self._test_delete_association(req_format='json')
 
     def test_delete_association_xml(self):
         """Test deleting association with xml"""
-        self._test_delete_association(format='xml')
+        self._test_delete_association(req_format='xml')
 
     def test_delete_assoc_alt_tenant(self):
         """Test deleting association with alternate tenant"""
