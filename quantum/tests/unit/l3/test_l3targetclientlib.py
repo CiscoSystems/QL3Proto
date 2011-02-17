@@ -18,8 +18,8 @@
 """Testing L3 Target CLI"""
 
 import logging
-import unittest
-import re
+#import unittest
+#import re
 
 from quantum.tests.unit.l3.test_l3clientlib import L3CLIAPITest
 
@@ -32,27 +32,27 @@ TENANT_2 = 'tenant2'
 class L3TargetCLIAPITest(L3CLIAPITest):
     """L3 Target tests class"""
     def _test_list_targets(self, tenant=TENANT_1,
-                           format='json', status=200):
+                           req_format='json', status=200):
         """Test to list available target"""
         LOG.debug("_test_list_target - tenant:%s "\
-                  "- format:%s - START", format, tenant)
+                  "- req_format:%s - START", req_format, tenant)
         self._assert_sanity(self.client.list_available_targets,
                             status,
                             "GET",
                             "routetables/001/targets",
                             data=["001"],
                             params={'tenant': tenant,
-                                    'format': format})
+                                    'format': req_format})
         LOG.debug("_test_list_targets - tenant:%s "\
-                  "- format:%s - END", format, tenant)
+                  "- req_format:%s - END", req_format, tenant)
 
     def test_list_targets_json(self):
         """Test to list available target with json"""
-        self._test_list_targets(format='json')
+        self._test_list_targets(req_format='json')
 
     def test_list_targets_xml(self):
         """Test to list available target with xml"""
-        self._test_list_targets(format='xml')
+        self._test_list_targets(req_format='xml')
 
     def test_list_targets_alt_tenant(self):
         """Test to list available target with alternate tenant"""

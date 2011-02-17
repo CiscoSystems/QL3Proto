@@ -31,28 +31,27 @@ def create_request(path, body, content_type, method='GET'):
     return req
 
 
-def _target_list_request(tenant_id, routetable_id, format='xml'):
+def _target_list_request(tenant_id, routetable_id, req_format='xml'):
     """creting request for target list"""
     method = 'GET'
-    print tenant_id + routetable_id
-    path = "/tenants/%(tenant_id)s/routetables/%(routetable_id)s/targets" \
-           ".%(format)s" % locals()
-    content_type = "application/%s" % format
+    path = "/tenants/" + str(tenant_id) + "/routetables/" +\
+            str(routetable_id) + "/targets.%(req_format)s" % locals()
+    content_type = "application/%s" % req_format
     return create_request(path, None, content_type, method)
 
 
-def target_list_request(tenant_id, routetable_id, format='xml'):
+def target_list_request(tenant_id, routetable_id, req_format='xml'):
     """creting request for target list"""
-    return _target_list_request(tenant_id, routetable_id, format)
+    return _target_list_request(tenant_id, routetable_id, req_format)
 
 
-def new_routetable_request(tenant_id, format='xml', custom_req_body=None):
+def new_routetable_request(tenant_id, req_format='xml', custom_req_body=None):
     """creting request for a new routetable"""
     label = 'label'
     method = 'POST'
-    print tenant_id
-    path = "/tenants/%(tenant_id)s/routetables.%(format)s" % locals()
+    path = "/tenants/" + str(tenant_id) +\
+           "/routetables.%(req_format)s" % locals()
     data = custom_req_body or {'routetable': {'label': '%s' % label}}
-    content_type = "application/%s" % format
+    content_type = "application/%s" % req_format
     body = Serializer().serialize(data, content_type)
     return create_request(path, body, content_type, method)
