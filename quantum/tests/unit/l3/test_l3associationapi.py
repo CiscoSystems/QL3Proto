@@ -1,4 +1,3 @@
-"""Testing L3 Association API"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # Copyright 2011, Cisco Systems, Inc.
 # All Rights Reserved.
@@ -15,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #    @author: Atul Gaikwad, Cisco Systems, Inc.
+"""Testing L3 Association API"""
 
 import quantum.api.associations as associations
 import quantum.tests.unit.l3._test_l3associationapi as test_api
