@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #    @author: Sumit Naiksatam, Cisco Systems, Inc.
+"""Testing L3 Subnet API"""
 
 import logging
 import unittest
@@ -38,8 +39,10 @@ SUBNETS = 'subnets'
 
 
 class L3SubnetAbstractAPITest(L3AbstractAPITest):
+    """L3 Subnet tests class"""
 
     def _test_unparsable_data(self, format):
+        """Test for unparsable data"""
         LOG.debug("_test_unparsable_data - " \
                   " format:%s - START", format)
 
@@ -57,6 +60,7 @@ class L3SubnetAbstractAPITest(L3AbstractAPITest):
 
     def _create_subnet(self, format, cidr=None, custom_req_body=None,
                         expected_res_status=RESPONSE_CODE_CREATE):
+        """Creating a new subnet"""
         LOG.debug("Creating subnet")
         content_type = "application/" + format
         if not cidr:
@@ -76,6 +80,7 @@ class L3SubnetAbstractAPITest(L3AbstractAPITest):
             return subnet_data['subnet']['id']
 
     def _test_create_subnet(self, format):
+        """Test for creating a subnet"""
         LOG.debug("_test_create_subnet - format:%s - START", format)
         content_type = "application/%s" % format
         subnet_id = self._create_subnet(format)
@@ -94,6 +99,7 @@ class L3SubnetAbstractAPITest(L3AbstractAPITest):
         LOG.debug("_test_create_subnet - format:%s - END", format)
 
     def _test_create_subnet_badrequest(self, format):
+        """Test for creating a subnet- check for a badrequest"""
         LOG.debug("_test_create_subnet_badrequest - format:%s - START",
                   format)
         bad_body = {'subnet': {'bad-attribute': 'very-bad'}}
@@ -103,6 +109,7 @@ class L3SubnetAbstractAPITest(L3AbstractAPITest):
                   format)
 
     def _test_list_subnets(self, format):
+        """Test for listing subnets"""
         LOG.debug("_test_list_subnets - format:%s - START", format)
         content_type = "application/%s" % format
         self._create_subnet(format, "10.0.1.0/24")
@@ -118,6 +125,7 @@ class L3SubnetAbstractAPITest(L3AbstractAPITest):
         LOG.debug("_test_list_subnets - format:%s - END", format)
 
     def _test_list_subnets_detail(self, format):
+        """Test for listing subnets with details"""
         LOG.debug("_test_list_subnets_detail - format:%s - START", format)
         content_type = "application/%s" % format
         self._create_subnet(format, "10.0.1.0/24")
@@ -137,6 +145,7 @@ class L3SubnetAbstractAPITest(L3AbstractAPITest):
         LOG.debug("_test_list_subnets_detail - format:%s - END", format)
 
     def _test_show_subnet(self, format):
+        """Test for showing subnets"""
         LOG.debug("_test_show_subnet - format:%s - START", format)
         content_type = "application/%s" % format
         subnet_id = self._create_subnet(format)
@@ -156,6 +165,7 @@ class L3SubnetAbstractAPITest(L3AbstractAPITest):
         LOG.debug("_test_show_subnet - format:%s - END", format)
 
     def _test_show_subnet_detail(self, format):
+        """Test for showing subnets with details"""
         LOG.debug("_test_show_subnet_detail - format:%s - START", format)
         content_type = "application/%s" % format
         # Create a subnet
@@ -176,6 +186,7 @@ class L3SubnetAbstractAPITest(L3AbstractAPITest):
         LOG.debug("_test_show_subnet_detail - format:%s - END", format)
 
     def _test_show_subnet_not_found(self, format):
+        """Test for showing subnets- check for its existence"""
         LOG.debug("_test_show_subnet_not_found - format:%s - START", format)
         show_subnet_req = testlib.show_subnet_request(self.tenant_id,
                                                         "A_BAD_ID",
@@ -185,6 +196,7 @@ class L3SubnetAbstractAPITest(L3AbstractAPITest):
         LOG.debug("_test_show_subnet_not_found - format:%s - END", format)
 
     def _test_update_subnet(self, format):
+        """Test for updating a subnet"""
         LOG.debug("_test_update_subnet - format:%s - START", format)
         content_type = "application/%s" % format
         new_cidr = '10.0.3.0/24'
@@ -212,6 +224,7 @@ class L3SubnetAbstractAPITest(L3AbstractAPITest):
         LOG.debug("_test_update_subnet - format:%s - END", format)
 
     def _test_update_subnet_badrequest(self, format):
+        """Test for updating a subnet- check for a badrequest"""
         LOG.debug("_test_update_subnet_badrequest - format:%s - START",
                   format)
         subnet_id = self._create_subnet(format)
@@ -226,6 +239,7 @@ class L3SubnetAbstractAPITest(L3AbstractAPITest):
                   format)
 
     def _test_update_subnet_not_found(self, format):
+        """Test for updating a subnet- check for its existence"""
         LOG.debug("_test_update_subnet_not_found - format:%s - START",
                   format)
         new_cidr = '10.0.3.0/24'
@@ -239,6 +253,7 @@ class L3SubnetAbstractAPITest(L3AbstractAPITest):
                   format)
 
     def _test_delete_subnet(self, format):
+        """Test for deleting a subnet"""
         LOG.debug("_test_delete_subnet - format:%s - START", format)
         content_type = "application/%s" % format
         subnet_id = self._create_subnet(format)
@@ -258,6 +273,7 @@ class L3SubnetAbstractAPITest(L3AbstractAPITest):
         LOG.debug("_test_delete_subnet - format:%s - END", format)
 
     def setUp(self, api_router_klass, xml_metadata_dict):
+        """setUp for the test"""
         super(L3SubnetAbstractAPITest, self).setUp(api_router_klass,
                                                    xml_metadata_dict)
         self.tenant_id = "test_tenant"
@@ -277,64 +293,85 @@ class L3SubnetAbstractAPITest(L3AbstractAPITest):
         super(L3SubnetAbstractAPITest, self).tearDown()
 
     def test_list_subnets_json(self):
+        """Test for listing subnets with json"""
         self._test_list_subnets('json')
 
     def test_list_subnets_xml(self):
+        """Test for listing subnets with xml"""
         self._test_list_subnets('xml')
 
     def test_list_subnets_detail_json(self):
+        """Test for detailed listing of subnets with json"""
         self._test_list_subnets_detail('json')
 
     def test_list_subnets_detail_xml(self):
+        """Test for detailed listing of subnets with xml"""
         self._test_list_subnets_detail('xml')
 
     def test_create_subnet_json(self):
+        """Test for creating a subnet with json"""
         self._test_create_subnet('json')
 
     def test_create_subnet_xml(self):
+        """Test for creating a subnet with xml"""
         self._test_create_subnet('xml')
 
-    def test_create_subnet_badrequest_json(self):
+    def test_create_subnet_badreq_json(self):
+        """Test for creating a subnet- check for a badrequest with json"""
         self._test_create_subnet_badrequest('json')
 
-    def test_create_subnet_badreqyest_xml(self):
+    def test_create_subnet_badreq_xml(self):
+        """Test for creating a subnet- check for a badrequest with xml"""
         self._test_create_subnet_badrequest('xml')
 
     def test_show_subnet_not_found_json(self):
+        """Test for showing subnets- check for its existence with json"""
         self._test_show_subnet_not_found('json')
 
     def test_show_subnet_not_found_xml(self):
+        """Test for showing subnets- check for its existence with xml"""
         self._test_show_subnet_not_found('xml')
 
     def test_show_subnet_json(self):
+        """Test for showing subnets with json"""
         self._test_show_subnet('json')
 
     def test_show_subnet_xml(self):
+        """Test for showing subnets with xml"""
         self._test_show_subnet('xml')
 
     def test_show_subnet_detail_json(self):
+        """Test for detailed show subnet with json"""
         self._test_show_subnet_detail('json')
 
     def test_show_subnet_detail_xml(self):
+        """Test for detailed show subnet with xml"""
         self._test_show_subnet_detail('xml')
 
     def test_delete_subnet_json(self):
+        """Test for deleting a subnet with json"""
         self._test_delete_subnet('json')
 
     def test_delete_subnet_xml(self):
+        """Test for deleting a subnet with xml"""
         self._test_delete_subnet('xml')
 
     def test_update_subnet_json(self):
+        """Test for updating a subnet with json"""
         self._test_update_subnet('json')
 
     def test_update_subnet_xml(self):
+        """Test for updating a subnet with xml"""
         self._test_update_subnet('xml')
 
-    def test_update_subnet_badrequest_json(self):
+    def test_update_subnet_badreq_json(self):
+        """Test for updating a subnet- check for a badrequest with json"""
         self._test_update_subnet_badrequest('json')
 
     def test_unparsable_data_xml(self):
+        """Test for unparsable data with xml"""
         self._test_unparsable_data('xml')
 
     def test_unparsable_data_json(self):
+        """Test for unparsable data with json"""
         self._test_unparsable_data('json')

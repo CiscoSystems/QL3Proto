@@ -109,7 +109,7 @@ class L3AssociationAbstractAPITest(L3AbstractAPITest):
         LOG.debug("_test_show_association - req_format:%s - END", req_format)
 
     def _test_show_assoc_not_found(self, req_format):
-        """Test to check if no show association found"""
+        """Test show association not found"""
         LOG.debug("_test_show_association_not_found - req_format:%s - START",
                   req_format)
         LOG.debug("Creating subnet")
@@ -125,7 +125,6 @@ class L3AssociationAbstractAPITest(L3AbstractAPITest):
         """Test deleting association"""
         LOG.debug("_test_delete_association - req_format:%s - START",
                    req_format)
-        #content_type = "application/%s" % req_format
         subnet_id = self._create_subnet_id(req_format)
         routetable_id = self._create_routetable_id(req_format)
         self._create_association(req_format, subnet_id, routetable_id)
@@ -171,7 +170,7 @@ class L3AssociationAbstractAPITest(L3AbstractAPITest):
         LOG.debug("_create_routetable_id - END")
 
     def _test_unparsable_data(self, req_format):
-        """Testing unparsable input data"""
+        """Test for unparsable input data"""
         LOG.debug("_test_unparsable_data - " \
                   " req_format:%s - START", req_format)
         data = "this is not json or xml"

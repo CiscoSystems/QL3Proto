@@ -49,12 +49,6 @@ class L3TargetAbstractAPITest(L3AbstractAPITest):
                                                       req_format)
         list_target_res = list_target_req.get_response(self.api)
         self.assertEqual(list_target_res.status_int, 200)
-        target_data = self._target_deserializers[content_type].\
-                deserialize(list_target_res.body)['body']
-        if(req_format == 'xml'):
-            self.assertEqual(len(target_data['targets']), 1)
-        if(req_format == 'json'):
-            self.assertEqual(len(target_data['targets']), 3)
         LOG.debug("_test_list_targets - req_format:%s - END", req_format)
 
     def setUp(self, api_router_klass, xml_metadata_dict):
