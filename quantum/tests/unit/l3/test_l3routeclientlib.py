@@ -36,7 +36,7 @@ class L3RouteCLIAPITest(L3CLIAPITest):
         LOG.debug("_test_list_routes - tenant:%s "\
                   "- format:%s - END", format, tenant)
 
-    def _test_show_route_details(self, tenant='TENANT_1', 
+    def _test_show_route_details(self, tenant='TENANT_1',
                                  format='json', status=200):
         """
         CLI test show_route with detail

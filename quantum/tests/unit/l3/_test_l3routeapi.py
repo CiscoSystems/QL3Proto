@@ -15,7 +15,7 @@ regex = "([a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12})"
 class L3RouteAbstractAPITest(L3AbstractAPITest):
 
     """
-    Route API test class 
+    Route API test class
     """
 
     def _create_route(self, format, routetable_id,
@@ -164,7 +164,7 @@ class L3RouteAbstractAPITest(L3AbstractAPITest):
 
     def _create_route_id(self, format, routetable_id):
         """
-        return route ID for request bodies 
+        return route ID for request bodies
         """
         LOG.debug("_create_route_id - START")
         content_type = "application/%s" % format
@@ -280,7 +280,7 @@ class L3RouteAbstractAPITest(L3AbstractAPITest):
 
     def test_show_route_detail_json(self):
         """
-        show_route with json format and detail 
+        show_route with json format and detail
         """
         self._test_show_route_detail('json')
 

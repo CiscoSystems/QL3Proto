@@ -248,7 +248,7 @@ class L3SubnetAbstractAPITest(L3AbstractAPITest):
                                                             new_cidr,
                                                             format)
         update_subnet_res = update_subnet_req.get_response(self.api)
-        self.assertEqual(update_subnet_res.status_int, 420)
+        self.assertEqual(update_subnet_res.status_int, 450)
         LOG.debug("_test_update_subnet_not_found - format:%s - END",
                   format)
 
@@ -367,6 +367,18 @@ class L3SubnetAbstractAPITest(L3AbstractAPITest):
     def test_update_subnet_badreq_json(self):
         """Test for updating a subnet- check for a badrequest with json"""
         self._test_update_subnet_badrequest('json')
+
+    def test_update_subnet_badreq_xml(self):
+        """Test for updating a subnet- check for a badrequest with xml"""
+        self._test_update_subnet_badrequest('xml')
+
+    def test_update_subnet_notfound_xml(self):
+        """Test for updating a subnet with xml- check for existence"""
+        self._test_update_subnet_not_found('xml')
+
+    def test_update_subnet_notfound_json(self):
+        """Test for updating a subnet with json- check for existence"""
+        self._test_update_subnet_not_found('json')
 
     def test_unparsable_data_xml(self):
         """Test for unparsable data with xml"""
