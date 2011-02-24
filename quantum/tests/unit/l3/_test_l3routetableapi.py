@@ -14,13 +14,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #    @author: Shubhangi Satras, Cisco Systems, Inc.
-
+""" Class for routetable API test cases"""
 import logging
 
 
 import quantum.tests.unit.l3.testlib_l3routetableapi as testlib
 
-from quantum.tests.unit.l3._test_l3api import *
+from quantum.tests.unit.l3._test_l3api import L3AbstractAPITest
 from quantum.wsgi import XMLDeserializer, JSONDeserializer
 
 LOG = logging.getLogger(__name__)
@@ -33,29 +33,31 @@ ROUTETABLES = 'routetables'
 class L3RoutetableAbstractAPITest(L3AbstractAPITest):
     """This class contains test cases for routetable API"""
 
-    def _test_unparsable_data(self, format):
+    def _test_unparsable_data(self, req_format):
+        """ Tests unparsable data"""
         LOG.debug("_test_unparsable_data - " \
-                  " format:%s - START", format)
+                  " req_format:%s - START", req_format)
         data = "this is not json or xml"
         method = 'POST'
-        content_type = "application/%s" % format
+        content_type = "application/%s" % req_format
         tenant_id = self.tenant_id
-        path = "/tenants/%(tenant_id)s/routetables.%(format)s" % locals()
+        LOG.debug("tenant_id: %s", tenant_id)
+        path = "/tenants/%(tenant_id)s/routetables.%(req_format)s" % locals()
         routetable_req = testlib.create_request(path, data, content_type,
                                                 method)
         routetable_res = routetable_req.get_response(self.api)
         self.assertEqual(routetable_res.status_int, 400)
 
         LOG.debug("_test_unparsable_data - " \
-                  "format:%s - END", format)
+                  "req_format:%s - END", req_format)
 
-    def _create_routetable(self, format, custom_req_body=None,
+    def _create_routetable(self, req_format, custom_req_body=None,
                         expected_res_status=202):
         """ Creates routetable and returns the generated routable id"""
         LOG.debug("Creating routetable")
-        content_type = "application/" + format
+        content_type = "application/" + req_format
         routetable_req = testlib.new_routetable_request(self.tenant_id,
-                                                  format,
+                                                  req_format,
                                                   custom_req_body)
         routetable_res = routetable_req.get_response(self.api)
         self.assertEqual(routetable_res.status_int, expected_res_status)
@@ -64,56 +66,57 @@ class L3RoutetableAbstractAPITest(L3AbstractAPITest):
                     deserialize(routetable_res.body)['body']
             return routetable_data['routetable']['id']
 
-    def _test_create_routetable(self, format):
+    def _test_create_routetable(self, req_format):
         """Tests creation of routetable"""
-        LOG.debug("_test_create_routetable - format:%s - START", format)
-        content_type = "application/%s" % format
-        routetable_id = self._create_routetable(format)
+        LOG.debug("_test_create_routetable- req_format:%s - START", req_format)
+        content_type = "application/%s" % req_format
+        routetable_id = self._create_routetable(req_format)
         show_routetable_req = testlib.show_routetable_request(self.tenant_id,
                                                         routetable_id,
-                                                        format)
+                                                        req_format)
         show_routetable_res = show_routetable_req.get_response(self.api)
         self.assertEqual(show_routetable_res.status_int, 200)
         routetable_data = self._routetable_deserializers[content_type].\
                 deserialize(show_routetable_res.body)['body']
         self.assertEqual(routetable_id, routetable_data['routetable']['id'])
-        LOG.debug("_test_create_routetable - format:%s - END", format)
+        LOG.debug("_test_create_routetable - req_format:%s - END", req_format)
 
-    def _test_create_routetable_badrequest(self, format):
+    def _test_create_routetable_badrequest(self, req_format):
         """Tests creation of routetable when bad request is sent """
-        LOG.debug("_test_create_routetable_badrequest - format:%s - START",
-                  format)
+        LOG.debug("_test_create_routetable_badrequest - req_format:%s - START",
+                  req_format)
         bad_body = {'bad-attribute': {'bad-attribute': 'very-bad'}}
-        self._create_routetable(format, custom_req_body=bad_body,
+        self._create_routetable(req_format, custom_req_body=bad_body,
                              expected_res_status=400)
-        LOG.debug("_test_create_routetable_badrequest - format:%s - END",
-                  format)
+        LOG.debug("_test_create_routetable_badrequest - req_format:%s - END",
+                  req_format)
 
-    def _test_list_routetables(self, format):
+    def _test_list_routetables(self, req_format):
         """Tests proper listing of routetable """
-        LOG.debug("_test_list_routetables - format:%s - START", format)
-        content_type = "application/%s" % format
-        self._create_routetable(format)
-        self._create_routetable(format)
+        LOG.debug("_test_list_routetables - req_format:%s - START", req_format)
+        content_type = "application/%s" % req_format
+        self._create_routetable(req_format)
+        self._create_routetable(req_format)
         list_routetable_req = testlib.routetable_list_request(self.tenant_id,
-                                                        format)
+                                                        req_format)
         list_routetable_res = list_routetable_req.get_response(self.api)
         self.assertEqual(list_routetable_res.status_int, 200)
         routetable_data = self._routetable_deserializers[content_type].\
                 deserialize(list_routetable_res.body)['body']
         # Check routetable count: should return 2
         self.assertEqual(len(routetable_data['routetables']), 2)
-        LOG.debug("_test_list_routetables - format:%s - END", format)
+        LOG.debug("_test_list_routetables - req_format:%s - END", req_format)
 
-    def _test_list_routetables_detail(self, format):
+    def _test_list_routetables_detail(self, req_format):
         """Tests listing of routetable with each entry indetail """
-        LOG.debug("_test_list_routetables_detail - format:%s - START", format)
-        content_type = "application/%s" % format
-        self._create_routetable(format)
-  #      self._create_routetable(format)
+        LOG.debug("_test_list_routetables_detail - req_format:%s - START",
+                   req_format)
+        content_type = "application/%s" % req_format
+        self._create_routetable(req_format)
+  #      self._create_routetable(req_format)
         list_routetable_req = testlib.routetable_list_detail_request(
                                                      self.tenant_id,
-                                                     format)
+                                                     req_format)
         list_routetable_res = list_routetable_req.get_response(self.api)
         self.assertEqual(list_routetable_res.status_int, 200)
         routetable_data = self._routetable_deserializers[content_type].\
@@ -124,16 +127,17 @@ class L3RoutetableAbstractAPITest(L3AbstractAPITest):
         for routetable in routetable_data['routetables']:
             self.assertTrue('id' in routetable.keys())
             self.assertTrue(routetable['id'])
-        LOG.debug("_test_list_routetables_detail - format:%s - END", format)
+        LOG.debug("_test_list_routetables_detail - req_format:%s - END",
+                   req_format)
 
-    def _test_show_routetable(self, format):
+    def _test_show_routetable(self, req_format):
         """Tests show routetable """
-        LOG.debug("_test_show_routetable - format:%s - START", format)
-        content_type = "application/%s" % format
-        routetable_id = self._create_routetable(format)
+        LOG.debug("_test_show_routetable - req_format:%s - START", req_format)
+        content_type = "application/%s" % req_format
+        routetable_id = self._create_routetable(req_format)
         show_routetable_req = testlib.show_routetable_request(self.tenant_id,
                                                         routetable_id,
-                                                        format)
+                                                        req_format)
         show_routetable_res = show_routetable_req.get_response(self.api)
         self.assertEqual(show_routetable_res.status_int, 200)
         routetable_data = self._routetable_deserializers[content_type].\
@@ -143,16 +147,17 @@ class L3RoutetableAbstractAPITest(L3AbstractAPITest):
                           'description': routetable_data['description'],
                           'label': routetable_data['label']},
                           routetable_data)
-        LOG.debug("_test_show_routetable - format:%s - END", format)
+        LOG.debug("_test_show_routetable - req_format:%s - END", req_format)
 
-    def _test_show_routetable_detail(self, format):
+    def _test_show_routetable_detail(self, req_format):
         """Tests show routetable in detail """
-        LOG.debug("_test_show_routetable_detail - format:%s - START", format)
-        content_type = "application/%s" % format
+        LOG.debug("_test_show_routetable_detail - req_format:%s - START",
+                   req_format)
+        content_type = "application/%s" % req_format
         # Create a routetable
-        routetable_id = self._create_routetable(format)
+        routetable_id = self._create_routetable(req_format)
         show_routetable_req = testlib.show_routetable_detail_request(
-                                    self.tenant_id, routetable_id, format)
+                                    self.tenant_id, routetable_id, req_format)
         show_routetable_res = show_routetable_req.get_response(self.api)
         self.assertEqual(show_routetable_res.status_int, 200)
         routetable_data = self._routetable_deserializers[content_type].\
@@ -162,36 +167,39 @@ class L3RoutetableAbstractAPITest(L3AbstractAPITest):
                           'description': routetable_data['description'],
                           'label': routetable_data['label']},
                           routetable_data)
-        LOG.debug("_test_show_routetable_detail - format:%s - END", format)
+        LOG.debug("_test_show_routetable_detail - req_format:%s - END",
+                   req_format)
 
-    def _test_show_routetable_not_found(self, format):
+    def _test_show_routetable_not_found(self, req_format):
         """ Tests show routetable when routetable is not found"""
-        LOG.debug("_test_show_routetable_not_found - format:%s - START", \
-                  format)
+        LOG.debug("_test_show_routetable_not_found - req_format:%s - START", \
+                  req_format)
         show_routetable_req = testlib.show_routetable_request(self.tenant_id,
                                                         "A_BAD_ID",
-                                                        format)
+                                                        req_format)
         show_routetable_res = show_routetable_req.get_response(self.api)
         self.assertEqual(show_routetable_res.status_int, 460)
-        LOG.debug("_test_show_routetable_not_found - format:%s - END", format)
+        LOG.debug("_test_show_routetable_not_found - req_format:%s - END",
+                  req_format)
 
-    def _test_update_routetable(self, format):
+    def _test_update_routetable(self, req_format):
         """ Tests updation of routetable"""
-        LOG.debug("_test_update_routetable - format:%s - START", format)
-        content_type = "application/%s" % format
-        new_cidr = '10.0.3.0/24'
-        routetable_id = self._create_routetable(format)
+        LOG.debug("_test_update_routetable - req_format:%s - START",
+                   req_format)
+        content_type = "application/%s" % req_format
+        new_label = 'new_label'
+        routetable_id = self._create_routetable(req_format)
         update_routetable_req = testlib.update_routetable_request(
                                           self.tenant_id,
                                           routetable_id,
-                                          new_cidr,
-                                          format)
+                                          new_label,
+                                          req_format)
         update_routetable_res = update_routetable_req.get_response(self.api)
         self.assertEqual(update_routetable_res.status_int,
                          204)
         show_routetable_req = testlib.show_routetable_request(self.tenant_id,
                                                         routetable_id,
-                                                        format)
+                                                        req_format)
         show_routetable_res = show_routetable_req.get_response(self.api)
         self.assertEqual(show_routetable_res.status_int, 200)
         routetable_data = self._routetable_deserializers[content_type].\
@@ -199,63 +207,66 @@ class L3RoutetableAbstractAPITest(L3AbstractAPITest):
         LOG.debug("routetable_data is :%s", routetable_data)
         routetable_data = self._remove_non_attribute_keys(routetable_data)
         self.assertEqual({'id': routetable_id,
-                          'cidr': new_cidr,
-                          'network_id': routetable_data['network_id']},
-                         routetable_data)
-        LOG.debug("_test_update_routetable - format:%s - END", format)
+                          'label': new_label,
+                          'description': routetable_data['description']},
+                          routetable_data)
+        LOG.debug("_test_update_routetable - req_format:%s - END", req_format)
 
-    def _test_update_routetable_badrequest(self, format):
+    def _test_update_routetable_badrequest(self, req_format):
         """ Tests updation of routetable when bad request is sent"""
-        LOG.debug("_test_update_routetable_badrequest - format:%s - START",
-                  format)
-        routetable_id = self._create_routetable(format)
+        LOG.debug("_test_update_routetable_badrequest - req_format:%s - START",
+                  req_format)
+        routetable_id = self._create_routetable(req_format)
+        label = 'bad_label'
         bad_body = {'bad-attribute': {'bad-attribute': 'very-bad'}}
         update_routetable_req = testlib.\
                              update_routetable_request(self.tenant_id,
-                                                    routetable_id, format,
+                                                    routetable_id, label,
+                                                    req_format,
                                                     custom_req_body=bad_body)
         update_routetable_res = update_routetable_req.get_response(self.api)
         self.assertEqual(update_routetable_res.status_int, 400)
-        LOG.debug("_test_update_routetable_badrequest - format:%s - END",
-                  format)
+        LOG.debug("_test_update_routetable_badrequest - req_format:%s - END",
+                  req_format)
 
-    def _test_update_routetable_not_found(self, format):
+    def _test_update_routetable_not_found(self, req_format):
         """ Tests updation of routetable when routetable doesnot exist"""
-        LOG.debug("_test_update_routetable_not_found - format:%s - START",
-                  format)
-        new_cidr = '10.0.3.0/24'
+        LOG.debug("_test_update_routetable_not_found - req_format:%s - START",
+                  req_format)
+        label = 'label'
         update_routetable_req = testlib.update_routetable_request(
                                                    self.tenant_id,
                                                    "A BAD ID",
-                                                   new_cidr,
-                                                   format)
+                                                   label,
+                                                   req_format)
         update_routetable_res = update_routetable_req.get_response(self.api)
-        self.assertEqual(update_routetable_res.status_int, 420)
-        LOG.debug("_test_update_routetable_not_found - format:%s - END",
-                  format)
+        self.assertEqual(update_routetable_res.status_int, 460)
+        LOG.debug("_test_update_routetable_not_found - req_format:%s - END",
+                  req_format)
 
-    def _test_delete_routetable(self, format):
+    def _test_delete_routetable(self, req_format):
         """ Tests the deletion of the routetable"""
-        LOG.debug("_test_delete_routetable - format:%s - START", format)
-        content_type = "application/%s" % format
-        routetable_id = self._create_routetable(format)
+        LOG.debug("_test_delete_routetable - req_format:%s - START",
+                   req_format)
+        content_type = "application/%s" % req_format
+        routetable_id = self._create_routetable(req_format)
         LOG.debug("Deleting routetable %s"\
                   " of tenant %s" % (routetable_id, self.tenant_id))
         delete_routetable_req = testlib.routetable_delete_request(
                                                    self.tenant_id,
                                                    routetable_id,
-                                                   format)
+                                                   req_format)
         delete_routetable_res = delete_routetable_req.get_response(self.api)
         self.assertEqual(delete_routetable_res.status_int,
                          204)
         delete_routetable_req = testlib.routetable_delete_request(
                                                     self.tenant_id,
                                                     routetable_id,
-                                                    format)
+                                                    req_format)
         delete_routetable_res = delete_routetable_req.get_response(self.api)
         self.assertEqual(delete_routetable_res.status_int,
                          RESPONSE_CODE_ROUTETABLE_NOTFOUND)
-        LOG.debug("_test_delete_routetable - format:%s - END", format)
+        LOG.debug("_test_delete_routetable - req_format:%s - END", req_format)
 
     def setUp(self, api_router_klass, xml_metadata_dict):
         """This is a setUp procedure used for the setting up the parameters."""
@@ -310,11 +321,11 @@ class L3RoutetableAbstractAPITest(L3AbstractAPITest):
         self._test_create_routetable_badrequest('xml')
 
     def test_show_routetable_not_found_json(self):
-        """Tests show routetable for json format """
+        """Tests show routetable for json req_format """
         self._test_show_routetable_not_found('json')
 
     def test_show_routetable_not_found_xml(self):
-        """Tests show routetable for xml format"""
+        """Tests show routetable for xml req_format"""
         self._test_show_routetable_not_found('xml')
 
     def test_show_routetable_json(self):
@@ -340,20 +351,35 @@ class L3RoutetableAbstractAPITest(L3AbstractAPITest):
     def test_delete_routetable_xml(self):
         """Tests deletion of routetable with request sent in xml format"""
         self._test_delete_routetable('xml')
-    """
+
     def test_update_routetable_json(self):
+        """Tests updation of routetable with request sent in json format"""
         self._test_update_routetable('json')
 
     def test_update_routetable_xml(self):
+        """Tests updation of routetable with request sent in xml format"""
         self._test_update_routetable('xml')
 
+    def test_update_routetable_not_found_json(self):
+        """Tests updation with request sent with non-existing routetable"""
+        self._test_update_routetable_not_found('json')
+
+    def test_update_routetable_not_found_xml(self):
+        """Tests updation with request sent with non-existing routetable"""
+        self._test_update_routetable_not_found('xml')
+
     def test_update_routetable_badrequest_json(self):
+        """Tests updation with bad request sent in json format"""
         self._test_update_routetable_badrequest('json')
-    """
+
+    def test_update_routetable_badrequest_xml(self):
+        """Tests updation with bad request sent in xml format"""
+        self._test_update_routetable_badrequest('xml')
+
     def test_unparsable_data_xml(self):
         """ Tests unparasable data with request sent in xml format"""
         self._test_unparsable_data('xml')
 
     def test_unparsable_data_json(self):
-        """ Tests unparasable data with request sent injson format"""
+        """Tests unparasable data with request sent in json format"""
         self._test_unparsable_data('json')

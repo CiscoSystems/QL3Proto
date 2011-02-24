@@ -14,11 +14,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #    @author: Shubhangi Satras, Cisco Systems, Inc.
+""" Class for Routetable API testing """
 
-#pylint: disable-msg=E1002
 import quantum.api.routetables as routetables
 import quantum.tests.unit.l3._test_l3routetableapi as test_api
-
 
 
 class L3RoutetableAPITestV11(test_api.L3RoutetableAbstractAPITest):
@@ -38,7 +37,7 @@ class L3RoutetableAPITestV11(test_api.L3RoutetableAbstractAPITest):
                           'description': kwargs['description']},
                          kwargs['routetable_data'])
 
-    def setUp(self):
+    def setUp(self, api_router_klass=None, xml_metadata_dict=None):
         """This is setUp for setting the parameters before use"""
         super(L3RoutetableAPITestV11, self).setUp('quantum.api.APIRouterV11',
              {test_api.ROUTETABLES: routetables.ControllerV11.\
