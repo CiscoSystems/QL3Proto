@@ -109,7 +109,7 @@ class Controller(common.QuantumController):
         body = self._prepare_request_body(body,
                                           self._routetable_ops_param_list)
         LOG.debug("update() body: %s", body)
-        self._plugin.update_routetable(tenant_id, id, **body)
+        self._plugin.update_routetable(tenant_id, id, **body['routetable'])
 
     @common.APIFaultWrapper([exception.RoutetableNotFound])
     def delete(self, request, tenant_id, id):

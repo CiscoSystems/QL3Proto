@@ -279,7 +279,8 @@ class Client(object):
         """
         Creates a new subnet
         """
-        return self.do_request("POST", self.subnets_path, body=body)
+        return self.do_request("POST", self.subnets_path, body=body,
+                               exception_args={"cidr": body['subnet']['cidr']})
 
     @ApiCall
     def update_subnet(self, subnet, body=None):
@@ -350,7 +351,16 @@ class Client(object):
         Creates a new route
         """
         return self.do_request("POST", self.routes_path % routetable,
-                               body=body)
+                               body=body,
+                               exception_args=\
+                               {"source_id": body['route']['source'],
+                                "cidr": "%s or %s" % \
+                                (body['route']['source'],
+                                 body['route']['destination']),
+                                "destination_id": \
+                                body['route']['destination'],
+                                "target_id": \
+                                body['route']['target']})
 
     @ApiCall
     def delete_route(self, routetable, route, body=None):
@@ -369,15 +379,6 @@ class Client(object):
         """
         return self.do_request("GET", self.route_path % (routetable, route),
                                exception_args={"route_id": route,
-                                               "routetable_id": routetable})
-
-    @ApiCall
-    def update_route(self, routetable, route, body=None):
-        """
-        Updates a route
-        """
-        return self.do_request("PUT", self.route_path % (routetable, route),
-                               body=body, exception_args={"route_id": route,
                                                "routetable_id": routetable})
 
     @ApiCall

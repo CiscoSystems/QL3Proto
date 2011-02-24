@@ -132,9 +132,6 @@ class CmdOutputTemplate(OutputTemplate):
         "delete_route": "Deleted Route: %(id)s\n" +
                          "from Routetable: %(routetable_id)s\n" +
                          "for Tenant: %(tenant_id)s",
-        "update_route": "Updated Route ID: %(id)s \n" +
-                        "in Routetable: %(routetable_id)s\n" +
-                        "for Tenant: %(tenant_id)s\n",
         "show_route":   "Route-ID: %(route.id)s\n" +
                         "Routetable: %(route.routetable_id)s\n" +
                         "Source: %(route.source)s\n" +
@@ -375,27 +372,6 @@ def show_route(client, *args):
         LOG.debug("Operation 'show_route_details' executed.")
         output = prepare_output("show_route", tenant_id,
                                           dict(route=res))
-        print output
-    except Exception as ex:
-        _handle_exception(ex)
-
-
-def update_route(client, *args):
-    tenant_id, routetable_id, route_id, param_data = args
-    data = {'route': {}}
-    for kv in param_data.split(","):
-        k, v = kv.split("=")
-        data['route'][k] = v
-    data['routetable_id'] = routetable_id
-    data['route']['id'] = route_id
-    try:
-        res = client.update_route(routetable_id, route_id, data)
-        LOG.debug("Operation 'update_route' executed.")
-        # Response has no body. Use data for populating output
-        output = prepare_output("update_route", tenant_id, 
-                                dict(id=route_id,
-                                     routetable_id=routetable_id,
-                                     tenant_id=tenant_id))
         print output
     except Exception as ex:
         _handle_exception(ex)
