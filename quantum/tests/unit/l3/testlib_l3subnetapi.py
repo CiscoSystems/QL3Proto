@@ -21,6 +21,7 @@ from quantum.common.serializer import Serializer
 
 
 def create_request(path, body, content_type, method='GET'):
+    """Return complete request"""
     req = webob.Request.blank(path)
     req.method = method
     req.headers = {}
@@ -30,6 +31,7 @@ def create_request(path, body, content_type, method='GET'):
 
 
 def _subnet_list_request(tenant_id, format='xml', detail=False):
+    """Return request for list_subnets"""
     method = 'GET'
     detail_str = detail and '/detail' or ''
     path = "/tenants/%(tenant_id)s/subnets" \
@@ -39,14 +41,17 @@ def _subnet_list_request(tenant_id, format='xml', detail=False):
 
 
 def subnet_list_request(tenant_id, format='xml'):
+    """Make request for subnet_list"""
     return _subnet_list_request(tenant_id, format)
 
 
 def subnet_list_detail_request(tenant_id, format='xml'):
+    """Make request for subnet_list with detail"""
     return _subnet_list_request(tenant_id, format, detail=True)
 
 
 def _show_subnet_request(tenant_id, subnet_id, format='xml', detail=False):
+    """Return request for show_subnet"""
     method = 'GET'
     detail_str = detail and '/detail' or ''
     path = "/tenants/%(tenant_id)s/subnets" \
@@ -56,15 +61,18 @@ def _show_subnet_request(tenant_id, subnet_id, format='xml', detail=False):
 
 
 def show_subnet_request(tenant_id, subnet_id, format='xml'):
+    """Make request for show_subnet"""
     return _show_subnet_request(tenant_id, subnet_id, format)
 
 
 def show_subnet_detail_request(tenant_id, subnet_id, format='xml'):
+    """Make request for show_subnet with detail"""
     return _show_subnet_request(tenant_id, subnet_id, format, detail=True)
 
 
 def new_subnet_request(tenant_id, cidr='10.0.0.0/16',
                         format='xml', custom_req_body=None):
+    """Return request for create_subnet"""
     method = 'POST'
     path = "/tenants/%(tenant_id)s/subnets.%(format)s" % locals()
     data = custom_req_body or {'subnet': {'cidr': '%s' % cidr}}
@@ -75,6 +83,7 @@ def new_subnet_request(tenant_id, cidr='10.0.0.0/16',
 
 def update_subnet_request(tenant_id, subnet_id, cidr, format='xml',
                            custom_req_body=None):
+    """Make request for update_subnet"""
     method = 'PUT'
     path = "/tenants/%(tenant_id)s/subnets" \
            "/%(subnet_id)s.%(format)s" % locals()
@@ -85,6 +94,7 @@ def update_subnet_request(tenant_id, subnet_id, cidr, format='xml',
 
 
 def subnet_delete_request(tenant_id, subnet_id, format='xml'):
+    """Make request for subnet_delete"""
     method = 'DELETE'
     path = "/tenants/%(tenant_id)s/subnets/" \
            "%(subnet_id)s.%(format)s" % locals()
