@@ -34,10 +34,7 @@ ATTS = "attachments"
 
 
 class AbstractAPITest(unittest.TestCase):
-    """Abstract base class for Quantum API unit tests
-    Defined according to operations defined for Quantum API v1.0
-
-    """
+    """ Base class definiting some methods for API tests """
 
     def _deserialize_net_response(self, content_type, response):
         network_data = self._net_deserializers[content_type].\
@@ -85,9 +82,56 @@ class AbstractAPITest(unittest.TestCase):
         if expected_res_status in (200, 202):
             port_data = self._deserialize_port_response(content_type,
                                                         port_res)
-            LOG.debug("PORT RESPONSE:%s", port_res.body)
-            LOG.debug("PORT DATA:%s", port_data)
             return port_data['port']['id']
+
+    def _set_attachment(self, network_id, port_id, interface_id, fmt,
+                        expected_res_status=204):
+        put_attachment_req = testlib.put_attachment_request(self.tenant_id,
+                                                            network_id,
+                                                            port_id,
+                                                            interface_id,
+                                                            fmt)
+        put_attachment_res = put_attachment_req.get_response(self.api)
+        self.assertEqual(put_attachment_res.status_int, expected_res_status)
+
+    def setUp(self, api_router_klass, xml_metadata_dict):
+        options = {}
+        options['plugin_provider'] = test_config['plugin_name']
+        api_router_cls = utils.import_class(api_router_klass)
+        self.api = api_router_cls(options)
+        self.tenant_id = "test_tenant"
+        self.network_name = "test_network"
+
+        # Prepare XML & JSON deserializers
+        net_xml_deserializer = XMLDeserializer(xml_metadata_dict[NETS])
+        port_xml_deserializer = XMLDeserializer(xml_metadata_dict[PORTS])
+        att_xml_deserializer = XMLDeserializer(xml_metadata_dict[ATTS])
+
+        json_deserializer = JSONDeserializer()
+
+        self._net_deserializers = {
+            'application/xml': net_xml_deserializer,
+            'application/json': json_deserializer,
+        }
+        self._port_deserializers = {
+            'application/xml': port_xml_deserializer,
+            'application/json': json_deserializer,
+        }
+        self._att_deserializers = {
+            'application/xml': att_xml_deserializer,
+            'application/json': json_deserializer,
+        }
+
+    def tearDown(self):
+        """Clear the test environment"""
+        # Remove database contents
+        db.clear_db()
+
+
+class BaseAPIOperationsTest(AbstractAPITest):
+    """Abstract base class for Quantum API unit tests
+    Defined according to operations defined for Quantum API v1.0
+    """
 
     def _test_create_network(self, fmt):
         LOG.debug("_test_create_network - fmt:%s - START", fmt)
@@ -184,7 +228,8 @@ class AbstractAPITest(unittest.TestCase):
                                                         "A_BAD_ID",
                                                         fmt)
         show_network_res = show_network_req.get_response(self.api)
-        self.assertEqual(show_network_res.status_int, 420)
+        self.assertEqual(show_network_res.status_int,
+                         self._network_not_found_code)
         LOG.debug("_test_show_network_not_found - fmt:%s - END", fmt)
 
     def _test_rename_network(self, fmt):
@@ -232,7 +277,8 @@ class AbstractAPITest(unittest.TestCase):
                                                             new_name,
                                                             fmt)
         update_network_res = update_network_req.get_response(self.api)
-        self.assertEqual(update_network_res.status_int, 420)
+        self.assertEqual(update_network_res.status_int,
+                         self._network_not_found_code)
         LOG.debug("_test_rename_network_not_found - fmt:%s - END",
                   fmt)
 
@@ -279,7 +325,8 @@ class AbstractAPITest(unittest.TestCase):
                                                             network_id,
                                                             fmt)
         delete_network_res = delete_network_req.get_response(self.api)
-        self.assertEqual(delete_network_res.status_int, 421)
+        self.assertEqual(delete_network_res.status_int,
+                         self._network_in_use_code)
         LOG.debug("_test_delete_network_in_use - fmt:%s - END", fmt)
 
     def _test_delete_network_with_unattached_port(self, fmt):
@@ -324,7 +371,8 @@ class AbstractAPITest(unittest.TestCase):
         list_port_req = testlib.port_list_request(self.tenant_id,
                                                   "A_BAD_ID", fmt)
         list_port_res = list_port_req.get_response(self.api)
-        self.assertEqual(list_port_res.status_int, 420)
+        self.assertEqual(list_port_res.status_int,
+                         self._network_not_found_code)
         LOG.debug("_test_list_ports_networknotfound - fmt:%s - END", fmt)
 
     def _test_list_ports_detail(self, fmt):
@@ -413,7 +461,8 @@ class AbstractAPITest(unittest.TestCase):
                                                         "A_BAD_ID", port_id,
                                                         fmt)
         show_port_res = show_port_req.get_response(self.api)
-        self.assertEqual(show_port_res.status_int, 420)
+        self.assertEqual(show_port_res.status_int,
+                         self._network_not_found_code)
         LOG.debug("_test_show_port_networknotfound - fmt:%s - END",
                   fmt)
 
@@ -425,7 +474,8 @@ class AbstractAPITest(unittest.TestCase):
                                                         "A_BAD_ID",
                                                         fmt)
         show_port_res = show_port_req.get_response(self.api)
-        self.assertEqual(show_port_res.status_int, 430)
+        self.assertEqual(show_port_res.status_int,
+                         self._port_not_found_code)
         LOG.debug("_test_show_port_portnotfound - fmt:%s - END", fmt)
 
     def _test_create_port_noreqbody(self, fmt):
@@ -463,7 +513,7 @@ class AbstractAPITest(unittest.TestCase):
                   fmt)
         port_state = "ACTIVE"
         self._create_port("A_BAD_ID", port_state, fmt,
-                          expected_res_status=420)
+                          expected_res_status=self._network_not_found_code)
         LOG.debug("_test_create_port_networknotfound - fmt:%s - END",
                   fmt)
 
@@ -520,7 +570,8 @@ class AbstractAPITest(unittest.TestCase):
                                                       network_id, port_id,
                                                       fmt)
         delete_port_res = delete_port_req.get_response(self.api)
-        self.assertEqual(delete_port_res.status_int, 432)
+        self.assertEqual(delete_port_res.status_int,
+                         self._port_in_use_code)
         LOG.debug("_test_delete_port_in_use - fmt:%s - END", fmt)
 
     def _test_delete_port_with_bad_id(self, fmt):
@@ -534,7 +585,8 @@ class AbstractAPITest(unittest.TestCase):
                                                       network_id, "A_BAD_ID",
                                                       fmt)
         delete_port_res = delete_port_req.get_response(self.api)
-        self.assertEqual(delete_port_res.status_int, 430)
+        self.assertEqual(delete_port_res.status_int,
+                         self._port_not_found_code)
         LOG.debug("_test_delete_port_with_bad_id - fmt:%s - END", fmt)
 
     def _test_delete_port_networknotfound(self, fmt):
@@ -547,7 +599,8 @@ class AbstractAPITest(unittest.TestCase):
                                                       "A_BAD_ID", port_id,
                                                       fmt)
         delete_port_res = delete_port_req.get_response(self.api)
-        self.assertEqual(delete_port_res.status_int, 420)
+        self.assertEqual(delete_port_res.status_int,
+                         self._network_not_found_code)
         LOG.debug("_test_delete_port_networknotfound - fmt:%s - END",
                   fmt)
 
@@ -603,7 +656,8 @@ class AbstractAPITest(unittest.TestCase):
                                                         new_port_state,
                                                         fmt)
         update_port_res = update_port_req.get_response(self.api)
-        self.assertEqual(update_port_res.status_int, 420)
+        self.assertEqual(update_port_res.status_int,
+                         self._network_not_found_code)
         LOG.debug("_test_set_port_state_networknotfound - fmt:%s - END",
                   fmt)
 
@@ -620,7 +674,8 @@ class AbstractAPITest(unittest.TestCase):
                                                         new_port_state,
                                                         fmt)
         update_port_res = update_port_req.get_response(self.api)
-        self.assertEqual(update_port_res.status_int, 430)
+        self.assertEqual(update_port_res.status_int,
+                         self._port_not_found_code)
         LOG.debug("_test_set_port_state_portnotfound - fmt:%s - END",
                   fmt)
 
@@ -636,7 +691,8 @@ class AbstractAPITest(unittest.TestCase):
                                                         new_port_state,
                                                         fmt)
         update_port_res = update_port_req.get_response(self.api)
-        self.assertEqual(update_port_res.status_int, 431)
+        self.assertEqual(update_port_res.status_int,
+                         self._port_state_invalid_code)
         LOG.debug("_test_set_port_state_stateinvalid - fmt:%s - END",
                   fmt)
 
@@ -691,7 +747,8 @@ class AbstractAPITest(unittest.TestCase):
                                                             port_id,
                                                             fmt)
         get_attachment_res = get_attachment_req.get_response(self.api)
-        self.assertEqual(get_attachment_res.status_int, 420)
+        self.assertEqual(get_attachment_res.status_int,
+                         self._network_not_found_code)
         LOG.debug("_test_show_attachment_networknotfound - fmt:%s - END",
                   fmt)
 
@@ -706,7 +763,8 @@ class AbstractAPITest(unittest.TestCase):
                                                             "A_BAD_ID",
                                                             fmt)
         get_attachment_res = get_attachment_req.get_response(self.api)
-        self.assertEqual(get_attachment_res.status_int, 430)
+        self.assertEqual(get_attachment_res.status_int,
+                         self._port_not_found_code)
         LOG.debug("_test_show_attachment_portnotfound - fmt:%s - END",
                   fmt)
 
@@ -738,7 +796,8 @@ class AbstractAPITest(unittest.TestCase):
                                                             interface_id,
                                                             fmt)
         put_attachment_res = put_attachment_req.get_response(self.api)
-        self.assertEqual(put_attachment_res.status_int, 420)
+        self.assertEqual(put_attachment_res.status_int,
+                         self._network_not_found_code)
         LOG.debug("_test_put_attachment_networknotfound - fmt:%s - END",
                   fmt)
 
@@ -755,7 +814,8 @@ class AbstractAPITest(unittest.TestCase):
                                                             interface_id,
                                                             fmt)
         put_attachment_res = put_attachment_req.get_response(self.api)
-        self.assertEqual(put_attachment_res.status_int, 430)
+        self.assertEqual(put_attachment_res.status_int,
+                         self._port_not_found_code)
         LOG.debug("_test_put_attachment_portnotfound - fmt:%s - END",
                   fmt)
 
@@ -791,7 +851,8 @@ class AbstractAPITest(unittest.TestCase):
                                                                port_id,
                                                                fmt)
         del_attachment_res = del_attachment_req.get_response(self.api)
-        self.assertEqual(del_attachment_res.status_int, 420)
+        self.assertEqual(del_attachment_res.status_int,
+                         self._network_not_found_code)
         LOG.debug("_test_delete_attachment_networknotfound -" \
                   " fmt:%s - END", fmt)
 
@@ -806,7 +867,8 @@ class AbstractAPITest(unittest.TestCase):
                                                                "A_BAD_ID",
                                                                fmt)
         del_attachment_res = del_attachment_req.get_response(self.api)
-        self.assertEqual(del_attachment_res.status_int, 430)
+        self.assertEqual(del_attachment_res.status_int,
+                         self._port_not_found_code)
         LOG.debug("_test_delete_attachment_portnotfound - " \
                   "fmt:%s - END", fmt)
 
@@ -825,39 +887,6 @@ class AbstractAPITest(unittest.TestCase):
 
         LOG.debug("_test_unparsable_data - " \
                   "fmt:%s - END", fmt)
-
-    def setUp(self, api_router_klass, xml_metadata_dict):
-        options = {}
-        options['plugin_provider'] = test_config['plugin_name']
-        api_router_cls = utils.import_class(api_router_klass)
-        self.api = api_router_cls(options)
-        self.tenant_id = "test_tenant"
-        self.network_name = "test_network"
-
-        # Prepare XML & JSON deserializers
-        net_xml_deserializer = XMLDeserializer(xml_metadata_dict[NETS])
-        port_xml_deserializer = XMLDeserializer(xml_metadata_dict[PORTS])
-        att_xml_deserializer = XMLDeserializer(xml_metadata_dict[ATTS])
-
-        json_deserializer = JSONDeserializer()
-
-        self._net_deserializers = {
-            'application/xml': net_xml_deserializer,
-            'application/json': json_deserializer,
-        }
-        self._port_deserializers = {
-            'application/xml': port_xml_deserializer,
-            'application/json': json_deserializer,
-        }
-        self._att_deserializers = {
-            'application/xml': att_xml_deserializer,
-            'application/json': json_deserializer,
-        }
-
-    def tearDown(self):
-        """Clear the test environment"""
-        # Remove database contents
-        db.clear_db()
 
     def test_list_networks_json(self):
         self._test_list_networks('json')

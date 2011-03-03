@@ -20,11 +20,14 @@ import routes
 import unittest
 from quantum.tests.unit import BaseTest
 from webtest import TestApp
+from webtest import AppError
 
 
 from quantum import wsgi
+from quantum.api import faults
 from quantum.common import config
-from quantum.common import extensions
+from quantum.common import exceptions
+from quantum.extensions import extensions
 import sys
 print sys.path
 from quantum.plugins.sample.SamplePlugin import QuantumEchoPlugin
@@ -33,11 +36,18 @@ from quantum.tests.unit.extension_stubs import (StubExtension, StubPlugin,
                                         StubBaseAppController,
                                         ExtensionExpectingPluginInterface)
 import quantum.tests.unit.extensions
-from quantum.common.extensions import (ExtensionManager,
+from quantum.extensions.extensions import (ExtensionManager,
                                        PluginAwareExtensionManager,
                                        ExtensionMiddleware)
 
 LOG = logging.getLogger('test_extensions')
+
+from quantum.common import flags
+FLAGS = flags.FLAGS
+
+quantum_dir = os.path.dirname(os.path.abspath(quantum.__file__))
+src_dir = os.path.abspath(os.path.join(quantum_dir, ".."))
+FLAGS.state_path = src_dir
 
 test_conf_file = config.find_config_file({}, None, "quantum.conf.test")
 extensions_path = ':'.join(quantum.tests.unit.extensions.__path__)
@@ -63,11 +73,33 @@ class ResourceExtensionTest(unittest.TestCase):
         def show(self, request, id):
             return {'data': {'id': id}}
 
+        def notimplemented_function(self, request, id):
+            return faults.Quantum10HTTPError(
+                exceptions.NotImplementedError("notimplemented_function"))
+
         def custom_member_action(self, request, id):
             return {'member_action': 'value'}
 
         def custom_collection_action(self, request, **kwargs):
             return {'collection': 'value'}
+
+    def test_exceptions_notimplemented(self):
+        controller = self.ResourceExtensionController()
+        member = {'notimplemented_function': "GET"}
+        res_ext = extensions.ResourceExtension('tweedles', controller,
+                                               member_actions=member)
+        test_app = setup_extensions_test_app(SimpleExtensionManager(res_ext))
+
+        # Ideally we would check for a 501 code here but webtest doesn't take
+        # anything that is below 200 or above 400 so we can't actually check
+        # it.  It thows AppError instead.
+        try:
+            response = \
+                test_app.get("/tweedles/some_id/notimplemented_function")
+            # Shouldn't be reached
+            self.assertTrue(False)
+        except AppError:
+            pass
 
     def test_resource_can_be_added_as_extension(self):
         res_ext = extensions.ResourceExtension('tweedles',
