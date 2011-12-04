@@ -259,6 +259,12 @@ def get_plugin_from_config(file="config.ini"):
         return Config.get("PLUGIN", "provider")
 
 
+def get_l3plugin_from_config(file="config.ini"):
+        Config = ConfigParser.ConfigParser()
+        Config.read(file)
+        return Config.get("PLUGIN", "l3provider")
+
+
 class LazyPluggable(object):
     """A pluggable backend loaded lazily based on some value."""
 

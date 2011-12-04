@@ -16,6 +16,7 @@
 # @author: Somik Behera, Nicira Networks, Inc.
 # @author: Brad Hall, Nicira Networks, Inc.
 # @author: Dan Wendlandt, Nicira Networks, Inc.
+# @author: Sumit Naiksatam, Cisco Systems, Inc.
 
 import uuid
 
@@ -102,3 +103,92 @@ class Network(BASE, QuantumBase):
     def __repr__(self):
         return "<Network(%s,%s,%s)>" % \
           (self.uuid, self.name, self.tenant_id)
+
+
+class Subnet(BASE, QuantumBase):
+    """Represents a quantum subnet"""
+    __tablename__ = 'subnets'
+
+    uuid = Column(String(255), primary_key=True)
+    tenant_id = Column(String(255), nullable=False)
+    cidr = Column(String(255), nullable=False)
+    network_id = Column(String(255), ForeignKey("networks.uuid"),
+                        nullable=True)
+    routetable_id = Column(String(255), ForeignKey("routetables.uuid"),
+                        nullable=True)
+
+    def __init__(self, tenant_id, cidr, network_id):
+        self.uuid = str(uuid.uuid4())
+        self.tenant_id = tenant_id
+        self.cidr = cidr
+        self.network_id = network_id
+
+    def __repr__(self):
+        return "<Network(%s,%s,%s,%s)>" % \
+          (self.uuid, self.cidr, self.network_id, self.tenant_id)
+
+
+class Route(BASE, QuantumBase):
+    """Represents a route in a Routetable"""
+    __tablename__ = 'routes'
+
+    uuid = Column(String(255), primary_key=True)
+    routetable_id = Column(String(255), ForeignKey("routetables.uuid"),
+                        nullable=False)
+    source = Column(String(255), nullable=False)
+    destination = Column(String(255), nullable=False)
+    target = Column(String(255), nullable=False)
+
+    def __init__(self, routetable_id, source, destination, target):
+        self.uuid = str(uuid.uuid4())
+        self.routetable_id = routetable_id
+        self.source = source
+        self.destination = destination
+        self.target = target
+
+    def __repr__(self):
+        return "<Route(%s,%s,%s,%s,%s)>" % (self.uuid, self.routetable_id,
+                                           self.source, self.destination,
+                                           self.target)
+
+
+class Routetable(BASE, QuantumBase):
+    """Represents a Routetable"""
+    __tablename__ = 'routetables'
+
+    uuid = Column(String(255), primary_key=True)
+    tenant_id = Column(String(255), nullable=False)
+    label = Column(String(255), nullable=True)
+    description = Column(String(255), nullable=True)
+    routes = relation(Route, order_by=Route.uuid, backref="routetable")
+    subnets = relation(Subnet, order_by=Subnet.uuid, backref="subnet")
+
+    def __init__(self, tenant_id, label=None, description=None):
+        self.uuid = str(uuid.uuid4())
+        self.tenant_id = tenant_id
+        self.label = label
+        self.description = description
+
+    def __repr__(self):
+        return "<Routetable(%s,%s)>" % \
+          (self.uuid, self.tenant_id)
+
+
+class Target(BASE, QuantumBase):
+    """Represents Target identifiers"""
+    __tablename__ = 'targets'
+
+    uuid = Column(String(255), primary_key=True)
+    tenant_id = Column(String(255), nullable=True)
+    tag = Column(String(255), nullable=False)
+    description = Column(String(255), nullable=True)
+
+    def __init__(self, tag, tenant_id=None, description=None):
+        self.uuid = str(uuid.uuid4())
+        self.tenant_id = tenant_id
+        self.tag = tag
+        self.description = description
+
+    def __repr__(self):
+        return "<Target(%s,%s)>" % \
+          (self.tag, self.description)

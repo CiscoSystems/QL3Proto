@@ -35,6 +35,15 @@ class Fault(webob.exc.HTTPException):
             431: "requestedStateInvalid",
             432: "portInUse",
             440: "alreadyAttached",
+            450: "subnetNotFound",
+            451: "invalidCIDR",
+            452: "duplicateCIDR",
+            453: "subnetAlreadyAssociated",
+            460: "routetableNotFound",
+            465: "routeNotFound",
+            466: "routeSourceInvalid",
+            467: "routeDestinationInvalid",
+            468: "routeTargetInvalid",
             470: "serviceUnavailable",
             471: "pluginFault"}
 
@@ -145,3 +154,126 @@ class AlreadyAttached(webob.exc.HTTPClientError):
     code = 440
     title = 'Already Attached'
     explanation = ('The resource is already attached to another port')
+
+
+class SubnetNotFound(webob.exc.HTTPClientError):
+    """
+    subclass of :class:`~HTTPClientError`
+
+    This indicates that the server did not find the subnet specified
+    in the HTTP request
+
+    code: 450, title: Network not Found
+    """
+    code = 450
+    title = 'Subnet not Found'
+    explanation = ('Unable to find a subnet with the specified identifier.')
+
+
+class InvalidCIDR(webob.exc.HTTPClientError):
+    """
+    subclass of :class:`~HTTPClientError`
+
+    This indicates that the CIDR is invalid in the
+    in the HTTP request
+
+    code: 451, title: Invalid CIDR
+    """
+    code = 451
+    title = 'Invalid CIDR'
+    explanation = ('Invalid CIDR provided')
+
+
+class DuplicateCIDR(webob.exc.HTTPClientError):
+    """
+    subclass of :class:`~HTTPClientError`
+
+    This indicates that a subnet with this CIDR already exists
+    for this tenant
+
+    code: 452, title: Duplicate CIDR
+    """
+    code = 452
+    title = 'Duplicate CIDR'
+    explanation = ('A subnet with this CIDR already exists for this tenant')
+
+
+class SubnetAlreadyAssociated(webob.exc.HTTPClientError):
+    """
+    subclass of :class:`~HTTPClientError`
+
+    This indicates that the Subnet is already associated with a
+    Route-table
+
+    code: 453, title: Subnet Already Associated
+    """
+    code = 453
+    title = 'Subnet already associated'
+    explanation = ('Subnet is already associated with another Route-table.')
+
+
+class RoutetableNotFound(webob.exc.HTTPClientError):
+    """
+    subclass of :class:`~HTTPClientError`
+
+    This indicates that the server did not find the routetable specified
+    in the HTTP request
+
+    code: 460, title: Routetable not Found
+    """
+    code = 460
+    title = 'Route Table not Found'
+    explanation = ('Unable to find a route table with the specified identifier.')
+
+
+class RouteNotFound(webob.exc.HTTPClientError):
+    """
+    subclass of :class:`~HTTPClientError`
+
+    This indicates that the server did not find the route specified
+    in the HTTP request
+
+    code: 465, title: Route not Found
+    """
+    code = 465
+    title = 'Route not Found'
+    explanation = ('Unable to find a route in the route table.')
+
+
+class RouteSoureInvalid(webob.exc.HTTPClientError):
+    """
+    subclass of :class:`~HTTPClientError`
+
+    This indicates that the route source identifier could not be resolved
+
+    code: 466, title: Route Source Invalid
+    """
+    code = 466
+    title = 'Route Source Invalid'
+    explanation = ('Unable to resolve route source identifier.')
+
+
+class RouteDestinationInvalid(webob.exc.HTTPClientError):
+    """
+    subclass of :class:`~HTTPClientError`
+
+    This indicates that the route destination identifier could not be resolved
+
+    code: 467, title: Route Destination Invalid
+    """
+    code = 467
+    title = 'Route Destination Invalid'
+    explanation = ('Unable to resolve route destination identifier.')
+
+
+class RouteTargetInvalid(webob.exc.HTTPClientError):
+    """
+    subclass of :class:`~HTTPClientError`
+
+    This indicates that the route source identifier could not be resolved
+
+    code: 468, title: Route Target Invalid
+    """
+    code = 468
+    title = 'Route Target Invalid'
+    explanation = ('Unable to resolve route target identifier.')
