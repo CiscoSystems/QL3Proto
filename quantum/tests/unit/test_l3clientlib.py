@@ -21,7 +21,7 @@ import unittest
 import re
 
 from quantum.common.serializer import Serializer
-from quantum.client import Client
+from quantum.client.l3client.l3client import Client
 
 LOG = logging.getLogger('quantum.tests.test_api')
 
