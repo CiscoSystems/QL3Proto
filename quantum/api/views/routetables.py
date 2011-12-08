@@ -38,7 +38,7 @@ class ViewBuilder(object):
             routetable = self._build_detail(routetable_data)
         else:
             routetable = self._build_simple(routetable_data)
-	return routetable
+        return routetable
 
     def _build_simple(self, routetable_data):
         """Return a simple model of a routetable."""

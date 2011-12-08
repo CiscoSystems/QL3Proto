@@ -381,7 +381,7 @@ def subnet_get_association(subnet_id):
 def routetable_create(tenant_id, **kwargs):
     session = get_session()
     label = "label-routetable-" + tenant_id
-    description = "description-routetable-" + tenant_id 
+    description = "description-routetable-" + tenant_id
     for key in kwargs.keys():
         if key == "label":
             label = kwargs[key]
@@ -471,7 +471,7 @@ def route_get(routetable_id_in, route_id):
           filter_by(routetable_id=routetable_id_in).\
           one()
     except exc.NoResultFound:
-        raise q_exc.RouteNotFound(routetable_id=routetable_id_in, 
+        raise q_exc.RouteNotFound(routetable_id=routetable_id_in,
                                   route_in=route_in)
 
 

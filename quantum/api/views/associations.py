@@ -35,7 +35,7 @@ class ViewBuilder(object):
     def build(self, association_data):
         """Builds the routetable association for the subnet"""
         if association_data['routetable_id']:
-            return dict(association=\
-                        dict(routetable_id=association_data['routetable_id']))
+            return dict(association=dict(routetable_id=association_data
+                                         ['routetable_id']))
         else:
             return dict(association={})

@@ -310,7 +310,7 @@ class Client(object):
         Fetches the details of a certain routetable
         """
         return self.do_request("GET", self.routetable_path % (routetable),
-                                        exception_args={"routetable_id": routetable})
+                                exception_args={"routetable_id": routetable})
 
     @ApiCall
     def create_routetable(self, body=None):
@@ -324,8 +324,9 @@ class Client(object):
         """
         Updates a routetable
         """
-        return self.do_request("PUT", self.routetable_path % (routetable), body=body,
-                                        exception_args={"routetable_id": routetable})
+        return self.do_request("PUT", self.routetable_path % (routetable),
+                               body=body,
+                               exception_args={"routetable_id": routetable})
 
     @ApiCall
     def delete_routetable(self, routetable):
@@ -333,7 +334,7 @@ class Client(object):
         Deletes the specified routetable
         """
         return self.do_request("DELETE", self.routetable_path % (routetable),
-                                        exception_args={"routetable_id": routetable})
+                               exception_args={"routetable_id": routetable})
 
     @ApiCall
     def list_routes(self, routetable):

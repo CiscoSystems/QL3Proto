@@ -38,7 +38,7 @@ class ViewBuilder(object):
             route = self._build_detail(route_data)
         else:
             route = self._build_simple(route_data)
-	return route
+        return route
 
     def _build_simple(self, route_data):
         """Return a simple model of a route"""

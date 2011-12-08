@@ -110,12 +110,14 @@ class CmdOutputTemplate(OutputTemplate):
         "create_routetable":     "Created a new Routetable with ID: " +
                           "%(routetable_id)s\n" +
                           "for Tenant: %(tenant_id)s",
-        "update_routetable":     "Updated Routetable with ID: %(routetable_id)s\n" +
+        "update_routetable":     "Updated Routetable with ID: " +
+                          "%(routetable_id)s\n" +
                           "for Tenant: %(tenant_id)s\n",
-        "delete_routetable":     "Deleted Routetable with ID: %(routetable_id)s\n" +
+        "delete_routetable":     "Deleted Routetable with ID: " +
+                          "%(routetable_id)s\n" +
                           "for Tenant %(tenant_id)s",
-        "list_routes":   "Routes for Tenant: %(tenant_id)s " + 
-                         "Routetable ID: %(routetable_id)s\n" + 
+        "list_routes":   "Routes for Tenant: %(tenant_id)s " +
+                         "Routetable ID: %(routetable_id)s\n" +
                          "\tRoute-ID\tSource\tDestination\tTarget\n" +
                          "%(routes|\t%(id)s\t" +
                          "%(source)s\t" +
@@ -138,11 +140,12 @@ class CmdOutputTemplate(OutputTemplate):
                         "Source: %(route.source)s\n" +
                         "Destination: %(route.destination)s\n" +
                         "Target: %(route.target)s",
-        "list_available_targets": "Targets for Tenant: %(tenant_id)s\n" + 
+        "list_available_targets": "Targets for Tenant: %(tenant_id)s\n" +
                          "\tTarget-ID\tDescription\n" +
                          "%(targets|\t%(tag)s\t" +
                          "%(description)s)s",
-        "show_subnet_association": "Subnet ID: %(subnet_id)s is associated with " +
+        "show_subnet_association": "Subnet ID: %(subnet_id)s is " +
+                          "associated with " +
                           "Route-table: %(association.routetable_id)s",
         "associate_subnet": "Associated Subnet ID: %(subnet_id)s with " +
                           "Route-table: %(routetable_id)s",

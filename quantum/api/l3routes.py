@@ -95,7 +95,6 @@ class Controller(common.QuantumController):
             return self._items(request, tenant_id, routetable_id,
                                route_details=True)
 
-
     def create(self, request, tenant_id, routetable_id):
         """ Creates a new route in a routetable for a given tenant """
         try:

@@ -131,12 +131,12 @@ class L3APITest(unittest.TestCase):
         show_subnet_res = show_subnet_req.get_response(self.api)
         self.assertEqual(show_subnet_res.status_int, 200)
         subnet_data = self._subnet_serializer.deserialize(
-                           show_subnet_res.body, content_type)
+                           show_subnet_res.body, content_type)['subnet']
         #TODO (Sumit): The assertion for the network_id needs to be different
         self.assertEqual({'id': subnet_id,
                           'cidr': self.cidr,
                           'network_id': subnet_data['network_id']},
-                          subnet_data['subnet'])
+                          subnet_data)
         LOG.debug("_test_show_subnet - format:%s - END", format)
 
     def _test_show_subnet_detail(self, format):
@@ -150,12 +150,12 @@ class L3APITest(unittest.TestCase):
         show_subnet_res = show_subnet_req.get_response(self.api)
         self.assertEqual(show_subnet_res.status_int, 200)
         subnet_data = self._subnet_serializer.deserialize(
-                           show_subnet_res.body, content_type)
+                           show_subnet_res.body, content_type)['subnet']
         #TODO (Sumit): The assertion for the network_id needs to be different
         self.assertEqual({'id': subnet_id,
                           'cidr': self.cidr,
                           'network_id': subnet_data['network_id']},
-                         subnet_data['subnet'])
+                         subnet_data)
         LOG.debug("_test_show_subnet_detail - format:%s - END", format)
 
     def _test_show_subnet_not_found(self, format):
@@ -184,12 +184,12 @@ class L3APITest(unittest.TestCase):
         show_subnet_res = show_subnet_req.get_response(self.api)
         self.assertEqual(show_subnet_res.status_int, 200)
         subnet_data = self._subnet_serializer.deserialize(
-                           show_subnet_res.body, content_type)
+                           show_subnet_res.body, content_type)['subnet']
         #TODO (Sumit): The assertion for the network_id needs to be different
         self.assertEqual({'id': subnet_id,
                           'cidr': new_cidr,
                           'network_id': subnet_data['network_id']},
-                         subnet_data['subnet'])
+                         subnet_data)
         LOG.debug("_test_update_subnet - format:%s - END", format)
 
     def _test_update_subnet_badrequest(self, format):

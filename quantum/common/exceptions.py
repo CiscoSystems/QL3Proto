@@ -173,8 +173,8 @@ class DuplicateRoute(QuantumException):
 
 
 class TargetNotFound(QuantumException):
-    message = _("Target %(target_id)s could not be found in the System Target "\
-                "Table")
+    message = _("Target %(target_id)s could not be found in the System " \
+                "Target Table")
 
 
 class Duplicate(Error):

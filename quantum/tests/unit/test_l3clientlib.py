@@ -140,7 +140,6 @@ class L3CLIAPITest(unittest.TestCase):
         LOG.debug("_test_ssl_certificates - tenant:%s "\
                   "- format:%s - END", format, tenant)
 
-
     def _test_list_subnets(self, tenant=TENANT_1, format='json', status=200):
         LOG.debug("_test_list_subnet - tenant:%s "\
                   "- format:%s - START", format, tenant)
@@ -305,4 +304,3 @@ class L3CLIAPITest(unittest.TestCase):
 
     def test_delete_subnet_error_451(self):
         self._test_delete_subnet(status=451)
-

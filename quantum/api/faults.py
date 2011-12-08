@@ -223,7 +223,8 @@ class RoutetableNotFound(webob.exc.HTTPClientError):
     """
     code = 460
     title = 'Route Table not Found'
-    explanation = ('Unable to find a route table with the specified identifier.')
+    explanation = \
+            ('Unable to find a route table with the specified identifier.')
 
 
 class RouteNotFound(webob.exc.HTTPClientError):

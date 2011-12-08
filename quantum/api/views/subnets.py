@@ -38,7 +38,7 @@ class ViewBuilder(object):
             subnet = self._build_detail(subnet_data)
         else:
             subnet = self._build_simple(subnet_data)
-	return subnet
+        return subnet
 
     def _build_simple(self, subnet_data):
         """Return a simple model of a subnet."""

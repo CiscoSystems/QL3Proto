@@ -54,7 +54,7 @@ class QuantumL3PluginBase(object):
     @abstractmethod
     def create_subnet(self, tenant_id, cidr, **kwargs):
         """
-        Creates a new subnet with the specified CIDR 
+        Creates a new subnet with the specified CIDR
         a symbolic name.
 
         :returns: a sequence of mappings with the following signature:
