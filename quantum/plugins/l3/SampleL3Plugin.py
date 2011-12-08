@@ -101,7 +101,8 @@ class FakeL3Plugin(object):
         subnets = []
         for subnet in db.subnet_list(tenant_id):
             subnet_item = {'subnet_id': str(subnet.uuid),
-                        'cidr': subnet.cidr}
+                           'cidr': subnet.cidr,
+                           'network_id': subnet.network_id}
             subnets.append(subnet_item)
         return subnets
 
