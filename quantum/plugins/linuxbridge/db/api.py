@@ -17,19 +17,15 @@
 # @author: Brad Hall, Nicira Networks, Inc.
 # @author: Dan Wendlandt, Nicira Networks, Inc.
 
-import logging
-
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, exc
+from sqlalchemy.orm import sessionmaker, exc, joinedload
 
 from quantum.common import exceptions as q_exc
-from quantum.db import models
-
+from quantum.plugins.linuxbridge.db import models
 
 _ENGINE = None
 _MAKER = None
 BASE = models.BASE
-LOG = logging.getLogger('quantum.db.api')
 
 
 def configure_db(options):
@@ -81,10 +77,6 @@ def unregister_models():
 
 
 def _check_duplicate_net_name(tenant_id, net_name):
-    """Checks whether a network with the same name
-       already exists for the tenant.
-    """
-
     session = get_session()
     try:
         net = session.query(models.Network).\
@@ -101,6 +93,7 @@ def _check_duplicate_net_name(tenant_id, net_name):
 def network_create(tenant_id, name):
     session = get_session()
 
+    _check_duplicate_net_name(tenant_id, name)
     with session.begin():
         net = models.Network(tenant_id, name)
         session.add(net)
@@ -111,6 +104,7 @@ def network_create(tenant_id, name):
 def network_list(tenant_id):
     session = get_session()
     return session.query(models.Network).\
+      options(joinedload(models.Network.ports)). \
       filter_by(tenant_id=tenant_id).\
       all()
 
@@ -119,6 +113,7 @@ def network_get(net_id):
     session = get_session()
     try:
         return  session.query(models.Network).\
+            options(joinedload(models.Network.ports)). \
             filter_by(uuid=net_id).\
             one()
     except exc.NoResultFound, e:
@@ -143,13 +138,6 @@ def network_destroy(net_id):
         net = session.query(models.Network).\
           filter_by(uuid=net_id).\
           one()
-
-        ports = session.query(models.Port).\
-            filter_by(network_id=net_id).\
-            all()
-        for p in ports:
-            session.delete(p)
-
         session.delete(net)
         session.flush()
         return net
@@ -171,15 +159,14 @@ def port_create(net_id, state=None):
 
 
 def port_list(net_id):
-    # confirm network exists
-    network_get(net_id)
     session = get_session()
     return session.query(models.Port).\
+      options(joinedload(models.Port.network)). \
       filter_by(network_id=net_id).\
       all()
 
 
-def port_get(port_id, net_id):
+def port_get(net_id, port_id):
     # confirm network exists
     network_get(net_id)
     session = get_session()
@@ -195,7 +182,8 @@ def port_get(port_id, net_id):
 def port_update(port_id, net_id, **kwargs):
     # confirm network exists
     network_get(net_id)
-    port = port_get(port_id, net_id)
+
+    port = port_get(net_id, port_id)
     session = get_session()
     for key in kwargs.keys():
         if key == "state":
@@ -207,48 +195,47 @@ def port_update(port_id, net_id, **kwargs):
     return port
 
 
-def port_set_attachment(port_id, net_id, new_interface_id):
+def port_set_attachment(net_id, port_id, new_interface_id):
     # confirm network exists
-    network_get(net_id)
-
+    port = port_get(net_id, port_id)
     session = get_session()
-    port = port_get(port_id, net_id)
 
     if new_interface_id != "":
         # We are setting, not clearing, the attachment-id
         if port['interface_id']:
             raise q_exc.PortInUse(net_id=net_id, port_id=port_id,
                                 att_id=port['interface_id'])
-
         try:
-            port = session.query(models.Port).\
+            prev_port = session.query(models.Port).\
             filter_by(interface_id=new_interface_id).\
             one()
-            raise q_exc.AlreadyAttached(net_id=net_id,
-                                    port_id=port_id,
-                                    att_id=new_interface_id,
-                                    att_port_id=port['uuid'])
+            if prev_port['interface_id']:
+                raise q_exc.AlreadyAttached(net_id=net_id,
+                                        port_id=port_id,
+                                        att_id=new_interface_id,
+                                        att_port_id=prev_port['uuid'])
         except exc.NoResultFound:
-            # this is what should happen
             pass
-    port.interface_id = new_interface_id
+
+    port['interface_id'] = new_interface_id
     session.merge(port)
     session.flush()
     return port
 
 
-def port_unset_attachment(port_id, net_id):
+def port_unset_attachment(net_id, port_id):
     # confirm network exists
     network_get(net_id)
 
     session = get_session()
-    port = port_get(port_id, net_id)
+    port = port_get(net_id, port_id)
     port.interface_id = None
     session.merge(port)
     session.flush()
+    return port
 
 
-def port_destroy(port_id, net_id):
+def port_destroy(net_id, port_id):
     # confirm network exists
     network_get(net_id)
 
@@ -266,3 +253,47 @@ def port_destroy(port_id, net_id):
         return port
     except exc.NoResultFound:
         raise q_exc.PortNotFound(port_id=port_id)
+
+
+#methods using just port_id
+def port_get_by_id(port_id):
+    session = get_session()
+    try:
+        return  session.query(models.Port).\
+          filter_by(uuid=port_id).one()
+    except exc.NoResultFound:
+        raise q_exc.PortNotFound(port_id=port_id)
+
+
+def port_set_attachment_by_id(port_id, new_interface_id):
+    port = port_get_by_id(port_id)
+    session = get_session()
+
+    if new_interface_id != "":
+        if port['interface_id']:
+            raise q_exc.PortInUse(port_id=port_id,
+                                  att_id=port['interface_id'])
+        try:
+            prev_port = session.query(models.Port).\
+            filter_by(interface_id=new_interface_id).\
+            one()
+            if prev_port['interface_id']:
+                raise q_exc.AlreadyAttached(port_id=port_id,
+                                        att_id=new_interface_id,
+                                        att_port_id=prev_port['uuid'])
+        except exc.NoResultFound:
+            pass
+
+    port['interface_id'] = new_interface_id
+    session.merge(port)
+    session.flush()
+    return port
+
+
+def port_unset_attachment_by_id(port_id):
+    session = get_session()
+    port = port_get_by_id(port_id)
+    port.interface_id = None
+    session.merge(port)
+    session.flush()
+    return port

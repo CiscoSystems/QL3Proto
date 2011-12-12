@@ -1,0 +1,99 @@
+# -- Background
+
+The Quantum Linux Bridge plugin is a plugin that allows you to manage
+connectivity between VMs on hosts that are capable of running a Linux Bridge.
+
+The Quantum Linux Bridge plugin consists of three components:
+
+1) The plugin itself: The plugin uses a database backend (mysql for
+   now) to store configuration and mappings that are used by the
+   agent.  The mysql server runs on a central server (often the same
+   host as nova itself).
+
+2) The quantum service host which will be running quantum.  This can
+   be run on the server running nova.
+
+3) An agent which runs on the host and communicates with the host operating
+   system. The agent gathers the configuration and mappings from
+   the mysql database running on the quantum host.
+
+The sections below describe how to configure and run the quantum
+service with the Linux Bridge plugin.
+
+# -- Nova configuration (controller node)
+
+1) Make sure to set up nova using the quantum network manager in the
+   nova.conf on the node that will be running nova-network.
+
+--network_manager=nova.network.quantum.manager.QuantumManager
+
+# -- Nova configuration (compute node(s))
+
+1) Configure the vif driver, and libvirt/vif type
+
+--libvirt_type=qemu
+--libvirt_vif_type=ethernet
+--libvirt_vif_driver=nova.virt.libvirt.vif_linuxbridge_quantum.QuantumLibvirtLinuxBridgeDriver
+--linuxnet_interface_driver=nova.network.quantum.linux_net_linux_bridge.QuantumLibvirtLinuxBridgeDriver
+
+The above two drivers are packaged with Quantum in the location:
+quantum/plugins/linuxbridge/nova
+
+These need to copied to the compute node in the appropriate locations.
+
+1) Copy:
+   quantum/plugins/linuxbridge/nova/vif_linuxbridge_quantum.py
+   to:
+   nova/virt/libvirt/vif_linuxbridge_quantum.py
+
+2) Copy:
+   quantum/plugins/linuxbridge/nova/linux_net_linux_bridge.py
+   to:
+   nova/virt/libvirt/linux_net_linux_bridge.py
+
+# -- Quantum configuration
+
+Make the openvswitch plugin the current quantum plugin
+
+- edit etc/plugins.ini and change the provider line to be:
+provider = quantum.plugins.linuxbridge.LinuxBridgePlugin.LinuxBridgePlugin
+
+# -- Database config.
+
+The Linux Bridge quantum plugin requires access to a mysql database in order
+to store configuration and mappings that will be used by the agent.  Here is
+how to set up the database on the host that you will be running the quantum
+service on.
+
+MySQL should be installed on the host, and all plugins and clients
+must be configured with access to the database.
+
+To prep mysql, run:
+
+$ mysql -u root -p -e "create database quantum_network"
+
+# log in to mysql service
+$ mysql -u root -p
+# The Linux Bridge Quantum agent running on each compute node must be able to
+# make a mysql connection back to the main database server.
+mysql> GRANT USAGE ON *.* to root@'yourremotehost' IDENTIFIED BY 'newpassword';
+# force update of authorization changes
+mysql> FLUSH PRIVILEGES;
+
+# -- Plugin configuration
+
+- Edit the configuration file:
+  etc/quantum/plugins/linuxbridge/linuxbridge_plugin.ini
+  Make sure it matches your mysql configuration.  This file must be updated
+  with the addresses and credentials to access the database. 
+
+# -- Agent configuration
+
+- Edit the configuration file:
+  etc/quantum/plugins/linuxbridge/linuxbridge_quantum_agent.ini
+
+- Copy quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py
+  and etc/quantum/plugins/linuxbridge/linuxbridge_quantum_agent.ini
+  to the compute node and run:
+$ python linuxbridge_quantum_agent.py linuxbridge_quantum_agent.ini
+  (Use --verbose option to see the logs)
