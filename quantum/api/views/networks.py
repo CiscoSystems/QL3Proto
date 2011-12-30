@@ -15,13 +15,19 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from quantum.api.api_common import OperationalStatus
 
-def get_view_builder(req):
+
+def get_view_builder(req, version):
     base_url = req.application_url
-    return ViewBuilder(base_url)
+    view_builder = {
+        '1.0': ViewBuilder10,
+        '1.1': ViewBuilder11,
+    }[version](base_url)
+    return view_builder
 
 
-class ViewBuilder(object):
+class ViewBuilder10(object):
 
     def __init__(self, base_url=None):
         """
@@ -54,6 +60,32 @@ class ViewBuilder(object):
         """Return details about a specific logical port."""
         port_dict = dict(id=port_data['port-id'],
                          state=port_data['port-state'])
+        if port_data['attachment']:
+            port_dict['attachment'] = dict(id=port_data['attachment'])
+        return port_dict
+
+
+class ViewBuilder11(ViewBuilder10):
+
+    def _build_simple(self, network_data):
+        """Return a simple model of a network."""
+        return dict(network=dict(id=network_data['net-id']))
+
+    def _build_detail(self, network_data):
+        """Return a detailed model of a network. """
+        op_status = network_data.get('net-op-status',
+                                     OperationalStatus.UNKNOWN)
+        return dict(network={'id': network_data['net-id'],
+                             'name': network_data['net-name'],
+                             'op-status': op_status})
+
+    def _build_port(self, port_data):
+        """Return details about a specific logical port."""
+        op_status = port_data.get('port-op-status',
+                                    OperationalStatus.UNKNOWN)
+        port_dict = {'id': port_data['port-id'],
+                     'state': port_data['port-state'],
+                     'op-status': op_status}
         if port_data['attachment']:
             port_dict['attachment'] = dict(id=port_data['attachment'])
         return port_dict
