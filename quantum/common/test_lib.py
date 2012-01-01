@@ -243,9 +243,11 @@ class QuantumTestResult(result.TextTestResult):
             if current_case != self._last_case:
                 self.stream.writeln(current_case)
                 self._last_case = current_case
-
+            #NOTE(salvatore-orlando):
+            #slightly changed in order to print test case class
+            #together with unit test name
             self.stream.write(
-                '    %s' % str(test.test._testMethodName).ljust(60))
+                '    %s' % str(test.test).ljust(60))
             self.stream.flush()
 
 
@@ -285,4 +287,6 @@ def run_tests(c=None):
 test_config = {
     "plugin_name": "quantum.plugins.sample.SamplePlugin.FakePlugin",
     "l3plugin_name": "quantum.plugins.l3.SampleL3Plugin.FakeL3Plugin",
+    "default_net_op_status": "UP",
+    "default_port_op_status": "UP",
 }

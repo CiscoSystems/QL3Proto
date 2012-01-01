@@ -242,7 +242,7 @@ class L3APITest(unittest.TestCase):
     def setUp(self):
         options = {}
         options['plugin_l3provider'] = test_config['l3plugin_name']
-        self.api = server.APIRouterV1(options)
+        self.api = server.APIRouterV11(options)
         self.tenant_id = "test_tenant"
         self.cidr = "10.0.0.0/24"
         self._subnet_serializer = \

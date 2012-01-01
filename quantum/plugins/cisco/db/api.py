@@ -76,24 +76,9 @@ def unregister_models():
     BASE.metadata.drop_all(_ENGINE)
 
 
-def _check_duplicate_net_name(tenant_id, net_name):
-    session = get_session()
-    try:
-        net = session.query(models.Network).\
-          filter_by(tenant_id=tenant_id, name=net_name).\
-          one()
-        raise q_exc.NetworkNameExists(tenant_id=tenant_id,
-                        net_name=net_name, net_id=net.uuid)
-    except exc.NoResultFound:
-        # this is the "normal" path, as API spec specifies
-        # that net-names are unique within a tenant
-        pass
-
-
 def network_create(tenant_id, name):
     session = get_session()
 
-    _check_duplicate_net_name(tenant_id, name)
     with session.begin():
         net = models.Network(tenant_id, name)
         session.add(net)
@@ -107,6 +92,17 @@ def network_list(tenant_id):
       options(joinedload(models.Network.ports)). \
       filter_by(tenant_id=tenant_id).\
       all()
+
+
+def network_id(net_name):
+    session = get_session()
+    try:
+        return  session.query(models.Network).\
+            options(joinedload(models.Network.ports)). \
+            filter_by(name=net_name).\
+            all()
+    except exc.NoResultFound, e:
+        raise q_exc.NetworkNotFound(net_name=net_name)
 
 
 def network_get(net_id):
@@ -124,8 +120,6 @@ def network_update(net_id, tenant_id, **kwargs):
     session = get_session()
     net = network_get(net_id)
     for key in kwargs.keys():
-        if key == "name":
-            _check_duplicate_net_name(tenant_id, kwargs[key])
         net[key] = kwargs[key]
     session.merge(net)
     session.flush()
