@@ -72,7 +72,7 @@ class Client(object):
     _serialization_metadata = {
         "application/xml": {
             "attributes": {
-                "subnet": ["id", "cidr"],
+                "subnet": ["id", "cidr", "network_id"],
                 "association": ["routetable_id"],
                 "routetable": ["id", "label", "description"],
                 "route": ["id", "source", "destination", "target"],
@@ -96,7 +96,7 @@ class Client(object):
     def __init__(self, host="127.0.0.1", port=9696, use_ssl=False, tenant=None,
                 format="xml", testingStub=None, key_file=None, cert_file=None,
                 auth_token=None, logger=None,
-                action_prefix="/v1.0/tenants/{tenant_id}"):
+                action_prefix="/v1.1/tenants/{tenant_id}"):
         """
         Creates a new client to some service.
 

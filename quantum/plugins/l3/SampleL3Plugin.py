@@ -1,5 +1,5 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-
+#
 # Copyright 2011, Cisco Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -21,54 +21,6 @@ from quantum.common import exceptions as exc
 from quantum.db import api as db
 
 LOG = logging.getLogger('quantum.plugins.SampleL3Plugin')
-
-
-class QuantumEchoL3Plugin(object):
-
-    """
-    QuantumEchoL3Plugin is a demo plugin that doesn't
-    do anything but demonstrated the concept of a
-    concrete Quantum L3 Plugin. Any call to this plugin
-    will result in just a "print" to std. out with
-    the name of the method that was called.
-    """
-
-    def get_all_subnets(self, tenant_id):
-        """
-        Returns a dictionary containing all
-        <subnet_uuid, cidr> for
-        the specified tenant.
-        """
-        print("get_all_subnets() called\n")
-
-    def create_subnet(self, tenant_id, cidr, **kwargs):
-        """
-        Creates a new subnet with the given CIDR, and assigns it
-        a symbolic name.
-        """
-        print("create_subnet() called\n")
-
-    def delete_subnet(self, tenant_id, subnet_id):
-        """
-        Deletes the subnet with the specified identifier
-        belonging to the specified tenant.
-        """
-        print("delete_subnet() called\n")
-
-    def get_subnet_details(self, tenant_id, subnet_id):
-        """
-        Gets the details of a subnet with the specifiied id
-        belonging to the specified tenant
-        """
-        print("get_subnet_details() called\n")
-
-    def update_subnet(self, tenant_id, subnet_id, **kwargs):
-        print("update_subnet() called")
-
-    supported_extension_aliases = ["FOXNSOX"]
-
-    def method_to_support_foxnsox_extension(self):
-        print("method_to_support_foxnsox_extension() called\n")
 
 
 class FakeL3Plugin(object):
@@ -326,3 +278,46 @@ class FakeL3Plugin(object):
         LOG.debug("FakeL3Plugin.disassociate_subnet() called")
         routetable_id = db.subnet_unset_association(subnet_id)
         return {'routetable_id': routetable_id}
+
+
+class QuantumEchoL3Plugin(object):
+
+    """
+    QuantumEchoL3Plugin is a demo plugin that doesn't
+    do anything but demonstrated the concept of a
+    concrete Quantum L3 Plugin. Any call to this plugin
+    will result in just a "print" to std. out with
+    the name of the method that was called.
+    """
+
+    def get_all_subnets(self, tenant_id):
+        """
+        Returns a dictionary containing all
+        <subnet_uuid, cidr> for
+        the specified tenant.
+        """
+        print("get_all_subnets() called\n")
+
+    def create_subnet(self, tenant_id, cidr, **kwargs):
+        """
+        Creates a new subnet with the given CIDR, and assigns it
+        a symbolic name.
+        """
+        print("create_subnet() called\n")
+
+    def delete_subnet(self, tenant_id, subnet_id):
+        """
+        Deletes the subnet with the specified identifier
+        belonging to the specified tenant.
+        """
+        print("delete_subnet() called\n")
+
+    def get_subnet_details(self, tenant_id, subnet_id):
+        """
+        Gets the details of a subnet with the specifiied id
+        belonging to the specified tenant
+        """
+        print("get_subnet_details() called\n")
+
+    def update_subnet(self, tenant_id, subnet_id, **kwargs):
+        print("update_subnet() called")

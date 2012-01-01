@@ -18,13 +18,18 @@
 #    @author Sumit Naiksatam
 #
 
+from quantum.api.api_common import OperationalStatus
 
-def get_view_builder(req):
+
+def get_view_builder(req, version):
     base_url = req.application_url
-    return ViewBuilder(base_url)
+    view_builder = {
+        '1.1': ViewBuilder11
+    }[version](base_url)
+    return view_builder
 
 
-class ViewBuilder(object):
+class ViewBuilder11(object):
 
     def __init__(self, base_url=None):
         """

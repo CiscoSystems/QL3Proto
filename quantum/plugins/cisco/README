@@ -52,10 +52,10 @@ NX-OS version and packages to enable Nexus support:
 * paramiko library - SSHv2 protocol library for python
   ** To install on RHEL 6.1, run: yum install python-paramiko
 * ncclient v0.3.1 - Python library for NETCONF clients 
-  ** RedHat does not provide a package for ncclient in RHEL 6.1. Here is how
-     to get it, from your shell prompt do:
+  ** You need a version of ncclient modifed by Cisco Systems.
+     To get it, from your shell prompt do:
 
-     git clone git@github.com:ddutta/ncclient.git 
+     git clone git@github.com:CiscoSystems/ncclient.git
      sudo python ./setup.py install
 
   ** For more information of ncclient, see:
@@ -377,52 +377,57 @@ How to test the installation
 ----------------------------
 The unit tests are located at quantum/plugins/cisco/tests/unit. They can be
 executed from the main folder using the run_tests.sh or to get a more detailed
-result the quantum/plugins/cisco/run_tests.py script.
+result the run_tests.py script.
 
-1. Testing the core API (without UCS/Nexus/RHEL hardware, and can be run on
+1. All unit tests (needs environment setup as indicated in the pre-requisites):
+
+   ./run_tests.sh -N quantum.plugins.cisco.tests.unit
+
+   or by modifying the environment variable to point to the plugin directory
+
+       In bash : export PLUGIN_DIR=quantum/plugins/cisco
+          tcsh/csh : setenv PLUGIN_DIR quantum/plugins/cisco
+
+       ./run_tests.sh -N
+
+   Another option is to execute the python script run_tests.py
+
+   python run_tests.py quantum.plugins.cisco.tests.unit
+
+2. Testing the core API (without UCS/Nexus/RHEL hardware, and can be run on
    Ubuntu):
-   First disable all device-specific plugins by commenting out the entries in:
-   quantum/plugins/cisco/conf/plugins.ini
-   Then run the test script:
+   Device-specific plugins can be disabled by commenting out the entries in:
+   etc/quantum/plugins/cisco/cisco_plugins.ini
+   The Core API can be tested by initially disabling all device plugins, then
+   enabling just the UCS plugins, and finally enabling both the UCS and the
+   Nexus plugins.
+   Execute the test script as follows:
 
-   Set the environment variable PLUGIN_DIR to the location of the plugin 
-   directory. This is manadatory if the run_tests.sh script is used.
-
-   In bash : export PLUGIN_DIR=quantum/plugins/cisco
-      tcsh/csh : setenv PLUGIN_DIR quantum/plugins/cisco
-   ./run_tests.sh quantum.plugins.cisco.tests.unit.test_l2networkApi
+   ./run_tests.sh -N quantum.plugins.cisco.tests.unit.test_l2networkApi
 
    or
 
-   python quantum/plugins/cisco/run_tests.py 
-	quantum.plugins.cisco.tests.unit.test_l2networkApi
+   python run_tests.py quantum.plugins.cisco.tests.unit.test_l2networkApi
 
-2. Specific Plugin unit test (needs environment setup as indicated in the 
+3. Specific Plugin unit test (needs environment setup as indicated in the
    pre-requisites):
 
-   In bash : export PLUGIN_DIR=quantum/plugins/cisco
-      tcsh/csh : setenv PLUGIN_DIR quantum/plugins/cisco
-   ./run_tests.sh quantum.plugins.cisco.tests.unit.<name_of_the file>
+   ./run_tests.sh -N quantum.plugins.cisco.tests.unit.<name_of_the_module>
 
-   or 
+   or
 
-   python <path to the plugin directory>/run_tests.py 
-          quantum.plugins.cisco.tests.unit.<name_of_the file>
+   python run_tests.py quantum.plugins.cisco.tests.unit.<name_of_the_module>
    E.g.:
 
-   python quantum/plugins/cisco/run_tests.py 
-          quantum.plugins.cisco.tests.unit.test_ucs_plugin
+   python run_tests.py quantum.plugins.cisco.tests.unit.test_ucs_plugin
 
-3. All unit tests (needs environment setup as indicated in the pre-requisites):
-   
-   In bash : export PLUGIN_DIR=quantum/plugins/cisco
-      tcsh/csh : setenv PLUGIN_DIR quantum/plugins/cisco
+   To run specific tests, use the following:
+   python run_tests.py
+    quantum.plugins.cisco.tests.unit.<name_of_the_module>:<ClassName>.<funcName>
 
-   ./run_tests.sh quantum.plugins.cisco.tests.unit
-
-   or 
-
-   python quantum/plugins/cisco/run_tests.py quantum.plugins.cisco.tests.unit
+   Eg:
+   python run_tests.py
+    quantum.plugins.cisco.tests.unit.test_ucs_plugin:UCSVICTestPlugin.test_create_port
 
 4. Testing the Extension API
    The script is placed alongwith the other cisco unit tests. The location may
@@ -430,15 +435,12 @@ result the quantum/plugins/cisco/run_tests.py script.
    Location quantum/plugins/cisco/tests/unit/test_cisco_extension.py
 
    The script can be executed by :
-    ./run_tests.sh quantum.plugins.cisco.tests.unit.test_cisco_extension
+    ./run_tests.sh -N quantum.plugins.cisco.tests.unit.test_cisco_extension
 
     or
 
     python run_tests.py quantum.plugins.cisco.tests.unit.test_cisco_extension
 
-   To run specific tests
-   python run_tests.py 
-    quantum.plugins.cisco.tests.unit.test_cisco_extension:<ClassName>.<funcName>
 
 Bingo bango bongo!  That's it!  Thanks for taking the leap into Quantum.
 

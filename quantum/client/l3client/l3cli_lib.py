@@ -241,7 +241,8 @@ def update_subnet(client, *args):
         client.update_subnet(subnet_id, data)
         LOG.debug("Operation 'update_subnet' executed.")
         # Response has no body. Use data for populating output
-        output = prepare_output("update_subnet", tenant_id, data)
+        output = prepare_output("update_subnet", tenant_id,
+                                dict(subnet_id=subnet_id))
         print output
     except Exception as ex:
         _handle_exception(ex)
@@ -256,9 +257,16 @@ def list_routetables(client, *args):
 
 
 def create_routetable(client, *args):
-    tenant_id = args
+    data = {'routetable': {}}
+    if len(args) > 1:
+        tenant_id, param_data = args
+        for kv in param_data.split(","):
+            k, v = kv.split("=")
+            data['routetable'][k] = v
+    else:
+        tenant_id = args[0]
     try:
-        res = client.create_routetable()
+        res = client.create_routetable(data)
         routetable_id = res["routetable"]["id"]
         LOG.debug("Operation 'create_routetable' executed.")
         output = prepare_output("create_routetable", tenant_id,
@@ -303,7 +311,8 @@ def update_routetable(client, *args):
         client.update_routetable(routetable_id, data)
         LOG.debug("Operation 'update_routetable' executed.")
         # Response has no body. Use data for populating output
-        output = prepare_output("update_routetable", tenant_id, data)
+        output = prepare_output("update_routetable", tenant_id,
+                                dict(routetable_id=routetable_id))
         print output
     except Exception as ex:
         _handle_exception(ex)
@@ -383,7 +392,9 @@ def update_route(client, *args):
         client.update_route(routetable_id, route_id, data)
         LOG.debug("Operation 'update_route' executed.")
         # Response has no body. Use data for populating output
-        output = prepare_output("update_route", tenant_id, data)
+        output = prepare_output("update_route", tenant_id,
+                                dict(routetable_id=routetable_id,
+                                     id=route_id))
         print output
     except Exception as ex:
         _handle_exception(ex)
