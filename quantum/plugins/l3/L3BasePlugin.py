@@ -20,62 +20,12 @@ import logging
 from quantum.common import exceptions as exc
 from quantum.db import api as db
 
-LOG = logging.getLogger('quantum.plugins.SampleL3Plugin')
+LOG = logging.getLogger('quantum.plugins.L3BasePlugin')
 
 
-class QuantumEchoL3Plugin(object):
-
+class L3BasePlugin(object):
     """
-    QuantumEchoL3Plugin is a demo plugin that doesn't
-    do anything but demonstrated the concept of a
-    concrete Quantum L3 Plugin. Any call to this plugin
-    will result in just a "print" to std. out with
-    the name of the method that was called.
-    """
-
-    def get_all_subnets(self, tenant_id):
-        """
-        Returns a dictionary containing all
-        <subnet_uuid, cidr> for
-        the specified tenant.
-        """
-        print("get_all_subnets() called\n")
-
-    def create_subnet(self, tenant_id, cidr, **kwargs):
-        """
-        Creates a new subnet with the given CIDR, and assigns it
-        a symbolic name.
-        """
-        print("create_subnet() called\n")
-
-    def delete_subnet(self, tenant_id, subnet_id):
-        """
-        Deletes the subnet with the specified identifier
-        belonging to the specified tenant.
-        """
-        print("delete_subnet() called\n")
-
-    def get_subnet_details(self, tenant_id, subnet_id):
-        """
-        Gets the details of a subnet with the specifiied id
-        belonging to the specified tenant
-        """
-        print("get_subnet_details() called\n")
-
-    def update_subnet(self, tenant_id, subnet_id, **kwargs):
-        print("update_subnet() called")
-
-    supported_extension_aliases = ["FOXNSOX"]
-
-    def method_to_support_foxnsox_extension(self):
-        print("method_to_support_foxnsox_extension() called\n")
-
-
-class FakeL3Plugin(object):
-    """
-    FakeL3Plugin is a demo plugin that provides
-    in-memory data structures to aid in quantum
-    client/cli/api development
+    L3BasePlugin is a base class for L3 plugins
     """
 
     def __init__(self):
@@ -83,7 +33,7 @@ class FakeL3Plugin(object):
         db.target_create("Private", None, description="System")
         db.target_create("Public", None, description="System")
         db.target_create("VPN", None, description="System")
-        FakeL3Plugin._net_counter = 0
+        L3BasePlugin._net_counter = 0
 
     def _get_subnet(self, tenant_id, subnet_id):
         try:
@@ -97,16 +47,7 @@ class FakeL3Plugin(object):
         Returns a dictionary containing all
         <subnet_uuid, cidr> for the specified tenant.
         """
-        LOG.debug("FakeL3Plugin.get_all_subnet() called")
-        tmpglobals = globals()
-        #print"globals: %s" % (tmpglobals)
-        for ech in tmpglobals:
-            print"%s" % (tmpglobals[ech])
-        """
-        for ech in tmpglobals:
-            print"%s.%s" % (tmpglobals[ech].__class__.__module__,
-                            tmpglobals[ech].__class__.__name__)
-        """
+        LOG.debug("L3BasePlugin.get_all_subnet() called")
         subnets = []
         for subnet in db.subnet_list(tenant_id):
             subnet_item = {'subnet_id': str(subnet.uuid),
@@ -119,7 +60,7 @@ class FakeL3Plugin(object):
         """
         retrieved a list of all the subnets
         """
-        LOG.debug("FakeL3Plugin.get_subnet_details() called")
+        LOG.debug("L3BasePlugin.get_subnet_details() called")
         subnet = self._get_subnet(tenant_id, subnet_id)
         return {'subnet_id': str(subnet.uuid),
                 'cidr': subnet.cidr,
@@ -129,7 +70,7 @@ class FakeL3Plugin(object):
         """
         Creates a new subnet, and assigns it a symbolic name.
         """
-        LOG.debug("FakeL3Plugin.create_subnet() called with, " \
+        LOG.debug("L3BasePlugin.create_subnet() called with, " \
                   "tenant_id: %s, cidr:%s" % (tenant_id, cidr))
         l2network_id = db.network_create(tenant_id, "subnet-" + cidr)['uuid']
         new_subnet = db.subnet_create(tenant_id, cidr, l2network_id)
@@ -141,7 +82,7 @@ class FakeL3Plugin(object):
         Deletes the subnet with the specified identifier
         belonging to the specified tenant.
         """
-        LOG.debug("FakeL3Plugin.delete_subnet() called")
+        LOG.debug("L3BasePlugin.delete_subnet() called")
         subnet = self._get_subnet(tenant_id, subnet_id)
         if subnet:
             db.subnet_destroy(subnet_id)
@@ -153,7 +94,7 @@ class FakeL3Plugin(object):
         """
         Updates the attributes of a particular subnet.
         """
-        LOG.debug("FakeL3Plugin.update_subnet() called")
+        LOG.debug("L3BasePlugin.update_subnet() called")
         subnet = db.subnet_update(subnet_id, tenant_id, **kwargs)
         return {'subnet_id': str(subnet.uuid),
                 'cidr': subnet.cidr,
@@ -171,7 +112,7 @@ class FakeL3Plugin(object):
         Returns a dictionary containing all
         <routetable_id> for the specified tenant.
         """
-        LOG.debug("FakeL3Plugin.get_all_routetable() called")
+        LOG.debug("L3BasePlugin.get_all_routetable() called")
         routetables = []
         for routetable in db.routetable_list(tenant_id):
             routetable_item = {'routetable_id': str(routetable.uuid)}
@@ -182,7 +123,7 @@ class FakeL3Plugin(object):
         """
         retrieved a list of all the routetables
         """
-        LOG.debug("FakeL3Plugin.get_routetable_details() called")
+        LOG.debug("L3BasePlugin.get_routetable_details() called")
         routetable = self._get_routetable(tenant_id, routetable_id)
         return {'routetable_id': str(routetable.uuid),
                 'label': routetable.label,
@@ -192,7 +133,7 @@ class FakeL3Plugin(object):
         """
         Creates a new routetable
         """
-        LOG.debug("FakeL3Plugin.create_routetable() called with, " \
+        LOG.debug("L3BasePlugin.create_routetable() called with, " \
                   "tenant_id: %s" % (tenant_id))
         new_routetable = db.routetable_create(tenant_id, **kwargs)
         # Return uuid for newly created routetablework as routetable_id.
@@ -203,7 +144,7 @@ class FakeL3Plugin(object):
         Deletes the routetable with the specified identifier
         belonging to the specified tenant.
         """
-        LOG.debug("FakeL3Plugin.delete_routetable() called")
+        LOG.debug("L3BasePlugin.delete_routetable() called")
         routetable = self._get_routetable(tenant_id, routetable_id)
         if routetable:
             db.routetable_destroy(routetable_id)
@@ -215,7 +156,7 @@ class FakeL3Plugin(object):
         """
         Updates the attributes of a particular routetable.
         """
-        LOG.debug("FakeL3Plugin.update_routetable() called")
+        LOG.debug("L3BasePlugin.update_routetable() called")
         routetable = db.routetable_update(routetable_id, tenant_id, **kwargs)
         return {'routetable_id': str(routetable.uuid),
                 'label': routetable.label,
@@ -235,7 +176,7 @@ class FakeL3Plugin(object):
         <route_id, routetable_id, source, destination, target>
         for the specified routetable.
         """
-        LOG.debug("FakeL3Plugin.get_all_routes() called")
+        LOG.debug("L3BasePlugin.get_all_routes() called")
         routes = []
         for route in db.route_list(routetable_id):
             route_item = {'route_id': route['uuid'],
@@ -251,7 +192,7 @@ class FakeL3Plugin(object):
         """
         Creates a new route
         """
-        LOG.debug("FakeL3Plugin.create_route() called with, " \
+        LOG.debug("L3BasePlugin.create_route() called with, " \
                   "tenant_id: %s routetable_id: %s" % (tenant_id,
                                                        routetable_id))
         new_route = db.route_create(routetable_id, source, destination, target,
@@ -266,7 +207,7 @@ class FakeL3Plugin(object):
         """
         Deletes the route with the specified id
         """
-        LOG.debug("FakeL3Plugin.delete_route() called with routetable_id: " \
+        LOG.debug("L3BasePlugin.delete_route() called with routetable_id: " \
                   "%s, route_id: %s" % (routetable_id, route_id))
         route = self._get_route(routetable_id, route_id)
         if route:
@@ -280,7 +221,7 @@ class FakeL3Plugin(object):
         """
         Updates the attributes of a particular route.
         """
-        LOG.debug("FakeL3Plugin.update_route() called")
+        LOG.debug("L3BasePlugin.update_route() called")
         new_route = db.route_update(routetable_id, route_id, **kwargs)
         return {'route_id': new_route['uuid'],
                 'routetable_id': new_route['routetable_id'],
@@ -292,7 +233,7 @@ class FakeL3Plugin(object):
         """
         retrieves the details of a route
         """
-        LOG.debug("FakeL3Plugin.get_route_details() called")
+        LOG.debug("L3BasePlugin.get_route_details() called")
         route = self._get_route(routetable_id, route_id)
         return {'route_id': route['uuid'],
                 'routetable_id': route['routetable_id'],
@@ -305,7 +246,7 @@ class FakeL3Plugin(object):
         Returns a dictionary of all targets in the format
         <tag, tenant_id, description>
         """
-        LOG.debug("FakeL3Plugin.get_all_targets() called")
+        LOG.debug("L3BasePlugin.get_all_targets() called")
         targets = []
         for target in db.target_list(tenant_id):
             target_item = {'target': target['tag'],
@@ -317,14 +258,14 @@ class FakeL3Plugin(object):
         """
         retrieves the routetable associated with a subnet
         """
-        LOG.debug("FakeL3Plugin.get_subnet_association() called")
+        LOG.debug("L3BasePlugin.get_subnet_association() called")
         return {'routetable_id': db.subnet_get_association(subnet_id)}
 
     def associate_subnet(self, tenant_id, subnet_id, routetable_id):
         """
         associates a subnet to a routetable
         """
-        LOG.debug("FakeL3Plugin.associate_subnet() called")
+        LOG.debug("L3BasePlugin.associate_subnet() called")
         association = db.subnet_set_association(subnet_id, routetable_id)
         return {'routetable_id': association['routetable_id']}
 
@@ -332,6 +273,6 @@ class FakeL3Plugin(object):
         """
         disassociates a subnet from a routetable
         """
-        LOG.debug("FakeL3Plugin.disassociate_subnet() called")
+        LOG.debug("L3BasePlugin.disassociate_subnet() called")
         routetable_id = db.subnet_unset_association(subnet_id)
         return {'routetable_id': routetable_id}
