@@ -20,6 +20,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, exc, joinedload
 
+from quantum.api.api_common import OperationalStatus
 from quantum.common import exceptions as q_exc
 from quantum.plugins.linuxbridge.db import models
 
@@ -76,26 +77,11 @@ def unregister_models():
     BASE.metadata.drop_all(_ENGINE)
 
 
-def _check_duplicate_net_name(tenant_id, net_name):
-    session = get_session()
-    try:
-        net = session.query(models.Network).\
-          filter_by(tenant_id=tenant_id, name=net_name).\
-          one()
-        raise q_exc.NetworkNameExists(tenant_id=tenant_id,
-                        net_name=net_name, net_id=net.uuid)
-    except exc.NoResultFound:
-        # this is the "normal" path, as API spec specifies
-        # that net-names are unique within a tenant
-        pass
-
-
-def network_create(tenant_id, name):
+def network_create(tenant_id, name, op_status=OperationalStatus.UNKNOWN):
     session = get_session()
 
-    _check_duplicate_net_name(tenant_id, name)
     with session.begin():
-        net = models.Network(tenant_id, name)
+        net = models.Network(tenant_id, name, op_status)
         session.add(net)
         session.flush()
         return net
@@ -145,13 +131,13 @@ def network_destroy(net_id):
         raise q_exc.NetworkNotFound(net_id=net_id)
 
 
-def port_create(net_id, state=None):
+def port_create(net_id, state=None, op_status=OperationalStatus.UNKNOWN):
     # confirm network exists
     network_get(net_id)
 
     session = get_session()
     with session.begin():
-        port = models.Port(net_id)
+        port = models.Port(net_id, op_status)
         port['state'] = state or 'DOWN'
         session.add(port)
         session.flush()

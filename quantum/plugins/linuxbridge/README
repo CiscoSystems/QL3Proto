@@ -20,6 +20,11 @@ The Quantum Linux Bridge plugin consists of three components:
 The sections below describe how to configure and run the quantum
 service with the Linux Bridge plugin.
 
+# -- Python library dependencies
+
+   Make sure you have the following package(s) installed:
+   python-configobj
+
 # -- Nova configuration (controller node)
 
 1) Make sure to set up nova using the quantum network manager in the
@@ -49,7 +54,7 @@ These need to copied to the compute node in the appropriate locations.
 2) Copy:
    quantum/plugins/linuxbridge/nova/linux_net_linux_bridge.py
    to:
-   nova/virt/libvirt/linux_net_linux_bridge.py
+   nova/network/quantum/linux_net_linux_bridge.py
 
 # -- Quantum configuration
 

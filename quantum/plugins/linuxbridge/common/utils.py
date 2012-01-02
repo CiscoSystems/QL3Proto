@@ -19,36 +19,31 @@
 #
 """
 
-import hashlib
 import logging
-#import shlex
 
-#from eventlet import greenthread
-#from eventlet.green import subprocess
-
+from quantum.api.api_common import OperationalStatus
 from quantum.plugins.linuxbridge.common import constants as const
 
 LOG = logging.getLogger(__name__)
 
 
-def get16ByteUUID(uuid):
-    """
-    Return a 16 byte has of the UUID, used when smaller unique
-    ID is required.
-    """
-    return hashlib.md5(uuid).hexdigest()[:16]
-
-
-def make_net_dict(net_id, net_name, ports):
+def make_net_dict(net_id, net_name, ports, op_status):
     """Helper funciton"""
-    res = {const.NET_ID: net_id, const.NET_NAME: net_name}
+    res = {const.NET_ID: net_id, const.NET_NAME: net_name, const.NET_OP_STATUS:
+          op_status}
     res[const.NET_PORTS] = ports
     return res
 
 
-def make_port_dict(port_id, port_state, net_id, attachment):
+def make_port_dict(port):
     """Helper funciton"""
-    res = {const.PORT_ID: port_id, const.PORT_STATE: port_state}
-    res[const.NET_ID] = net_id
-    res[const.ATTACHMENT] = attachment
-    return res
+    if port[const.PORTSTATE] == const.PORT_UP:
+        op_status = port[const.OPSTATUS]
+    else:
+        op_status = OperationalStatus.DOWN
+
+    return {const.PORT_ID: str(port[const.UUID]),
+            const.PORT_STATE: port[const.PORTSTATE],
+            const.PORT_OP_STATUS: op_status,
+            const.NET_ID: port[const.NETWORKID],
+            const.ATTACHMENT: port[const.INTERFACEID]}

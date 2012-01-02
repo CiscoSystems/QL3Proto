@@ -23,7 +23,8 @@ import os
 from quantum.common.config import find_config_file
 from quantum.plugins.linuxbridge.common import configparser as confp
 
-CONF_FILE = find_config_file({'plugin': 'linuxbridge'}, None, "linuxbridge_plugin.ini")
+CONF_FILE = find_config_file({'plugin': 'linuxbridge'}, None,
+                             "linuxbridge_plugin.ini")
 CONF_PARSER_OBJ = confp.ConfigParser(CONF_FILE)
 
 """
