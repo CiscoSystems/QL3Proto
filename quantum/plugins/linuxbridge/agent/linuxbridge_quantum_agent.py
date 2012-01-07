@@ -44,6 +44,8 @@ BRIDGE_INTERFACES_FS = BRIDGE_FS + BRIDGE_NAME_PLACEHOLDER + "/brif/"
 PORT_OPSTATUS_UPDATESQL = "UPDATE ports SET op_status = '%s' WHERE uuid = '%s'"
 DEVICE_NAME_PLACEHOLDER = "device_name"
 BRIDGE_PORT_FS_FOR_DEVICE = BRIDGE_FS + DEVICE_NAME_PLACEHOLDER + "/brport"
+VLAN_BINDINGS = "vlan_bindings"
+PORT_BINDINGS = "port_bindings"
 OP_STATUS_UP = "UP"
 OP_STATUS_DOWN = "DOWN"
 
@@ -100,7 +102,7 @@ class LinuxBridge:
                 quantum_bridge_list.append(bridge)
         return quantum_bridge_list
 
-    def get_enslaved_interfaces(self, bridge_name):
+    def get_interfaces_on_bridge(self, bridge_name):
         if self.device_exists(bridge_name):
             bridge_interface_path = \
                     BRIDGE_INTERFACES_FS.replace(BRIDGE_NAME_PLACEHOLDER,
@@ -132,13 +134,13 @@ class LinuxBridge:
     def get_bridge_for_tap_device(self, tap_device_name):
         bridges = self.get_all_quantum_bridges()
         for bridge in bridges:
-            interfaces = self.get_enslaved_interfaces(bridge)
+            interfaces = self.get_interfaces_on_bridge(bridge)
             if tap_device_name in interfaces:
                 return bridge
 
         return None
 
-    def is_device_enslaved(self, device_name):
+    def is_device_on_bridge(self, device_name):
         if not device_name:
             return False
         else:
@@ -190,82 +192,57 @@ class LinuxBridge:
             LOG.debug("Done starting bridge %s for subinterface %s" %
                       (bridge_name, interface))
 
-    def add_tap_interface(self, network_id, vlan_id, interface_id):
+    def add_tap_interface(self, network_id, vlan_id, tap_device_name):
         """
         If a VIF has been plugged into a network, this function will
         add the corresponding tap device to the relevant bridge
         """
-        if not interface_id:
-            """
-            Since the VIF id is null, no VIF is plugged into this port
-            no more processing is required
-            """
+        if not tap_device_name:
             return False
-        tap_device_name = self.get_tap_device_name(interface_id)
-        bridge_name = self.get_bridge_name(network_id)
+
         if not self.device_exists(tap_device_name):
             LOG.debug("Tap device: %s does not exist on this host, skipped" %
                       tap_device_name)
             return False
 
-        if interface_id:
-            current_bridge_name = \
-                    self.get_bridge_for_tap_device(tap_device_name)
-            if bridge_name == current_bridge_name:
+        current_bridge_name = \
+                self.get_bridge_for_tap_device(tap_device_name)
+        bridge_name = self.get_bridge_name(network_id)
+        if bridge_name == current_bridge_name:
+            return False
+        LOG.debug("Adding device %s to bridge %s" % (tap_device_name,
+                                                     bridge_name))
+        if current_bridge_name:
+            if self.run_cmd(['brctl', 'delif', current_bridge_name,
+                             tap_device_name]):
                 return False
-            LOG.debug("Adding device %s to bridge %s" % (tap_device_name,
-                                                         bridge_name))
-            if current_bridge_name:
-                if self.run_cmd(['brctl', 'delif', current_bridge_name,
-                                 tap_device_name]):
-                    return False
 
-            self.ensure_vlan_bridge(network_id, vlan_id)
-            if self.run_cmd(['brctl', 'addif', bridge_name, tap_device_name]):
-                return False
-            LOG.debug("Done adding device %s to bridge %s" % (tap_device_name,
-                                                              bridge_name))
-            return True
+        self.ensure_vlan_bridge(network_id, vlan_id)
+        if self.run_cmd(['brctl', 'addif', bridge_name, tap_device_name]):
+            return False
+        LOG.debug("Done adding device %s to bridge %s" % (tap_device_name,
+                                                          bridge_name))
+        return True
 
-    def add_gateway_interface(self, network_id, vlan_id, interface_id):
-        """
-        If a Gateway VIF has been plugged into a network, this function will
-        add the corresponding tap device to the relevant bridge
-        """
+    def add_interface(self, network_id, vlan_id, interface_id):
         if not interface_id:
             """
             Since the VIF id is null, no VIF is plugged into this port
             no more processing is required
             """
             return False
-        bridge_name = self.get_bridge_name(network_id)
-        if not self.device_exists(interface_id):
-            LOG.debug("Gateway interface: %s does not exist on this host, "\
-                      "skipped" % interface_id)
-            return False
-
-        if interface_id:
-            self.ensure_vlan_bridge(network_id, vlan_id)
-            if self.run_cmd(['brctl', 'addif', bridge_name, interface_id]):
-                return False
-            LOG.debug("Done adding device %s to bridge %s" % (interface_id,
-                                                              bridge_name))
-            return True
-
-    def add_interface(self, network_id, vlan_id, interface_id):
-        if not interface_id:
-            return False
         if interface_id.startswith(GATEWAY_INTERFACE_PREFIX):
-            return self.add_gateway_interface(network_id, vlan_id,
+            return self.add_tap_interface(network_id, vlan_id,
                                               interface_id)
         else:
+            tap_device_name = self.get_tap_device_name(interface_id)
             return self.add_tap_interface(network_id, vlan_id,
-                                          interface_id)
+                                          tap_device_name)
 
     def delete_vlan_bridge(self, bridge_name):
         if self.device_exists(bridge_name):
-            enslaved_interfaces = self.get_enslaved_interfaces(bridge_name)
-            for interface in enslaved_interfaces:
+            interfaces_on_bridge = self.get_interfaces_on_bridge(bridge_name)
+            for interface in interfaces_on_bridge:
                 self.remove_interface(bridge_name, interface)
                 if interface.startswith(self.physical_interface):
                     self.delete_vlan(interface)
@@ -282,7 +259,7 @@ class LinuxBridge:
 
     def remove_interface(self, bridge_name, interface_name):
         if self.device_exists(bridge_name):
-            if not is_device_enslaved(interface_name):
+            if not self.is_device_on_bridge(interface_name):
                 return True
             LOG.debug("Removing device %s from bridge %s" % \
                       (interface_name, bridge_name))
@@ -335,9 +312,9 @@ class LinuxBridgeQuantumAgent:
                 driver, hence we use the name as is
                 """
                 plugged_gateway_device_names.append(interface)
-	    else:
-	        tap_device_name = self.linux_br.get_tap_device_name(interface)
-		plugged_tap_device_names.append(tap_device_name)
+            else:
+                tap_device_name = self.linux_br.get_tap_device_name(interface)
+                plugged_tap_device_names.append(tap_device_name)
 
         LOG.debug("plugged tap device names %s" % plugged_tap_device_names)
         for tap_device in self.linux_br.get_all_tap_devices():
@@ -368,47 +345,63 @@ class LinuxBridgeQuantumAgent:
             if bridge not in current_quantum_bridge_names:
                 self.linux_br.delete_vlan_bridge(bridge)
 
-    def daemon_loop(self, conn):
+    def manage_networks_on_host(self, conn, old_vlan_bindings,
+                                old_port_bindings):
+        cursor = MySQLdb.cursors.DictCursor(conn)
+        cursor.execute("SELECT * FROM vlan_bindings")
+        rows = cursor.fetchall()
+        cursor.close()
+        vlan_bindings = {}
+        vlans_string = ""
+        for row in rows:
+            vlan_bindings[row['network_id']] = row
+            vlans_string = "%s %s" % (vlans_string, row)
 
-        while True:
-            cursor = MySQLdb.cursors.DictCursor(conn)
-            cursor.execute("SELECT * FROM vlan_bindings")
-            rows = cursor.fetchall()
-            cursor.close()
-            vlan_bindings = {}
-            vlans_string = ""
-            for r in rows:
-                vlan_bindings[r['network_id']] = r
-                vlans_string = "%s %s" % (vlans_string, r)
+        plugged_interfaces = []
+        cursor = MySQLdb.cursors.DictCursor(conn)
+        cursor.execute("SELECT * FROM ports where state = 'ACTIVE'")
+        port_bindings = cursor.fetchall()
+        cursor.close()
 
-            LOG.debug("VLAN-bindings: %s" % vlans_string)
+        ports_string = ""
+        for pb in port_bindings:
+            ports_string = "%s %s" % (ports_string, pb)
+            if pb['interface_id']:
+                vlan_id = \
+                        str(vlan_bindings[pb['network_id']]['vlan_id'])
+                if self.process_port_binding(pb['uuid'],
+                                             pb['network_id'],
+                                             pb['interface_id'],
+                                             vlan_id):
+                    cursor = MySQLdb.cursors.DictCursor(conn)
+                    sql = PORT_OPSTATUS_UPDATESQL % (pb['uuid'],
+                                                     OP_STATUS_UP)
+                    cursor.execute(sql)
+                    cursor.close()
+                plugged_interfaces.append(pb['interface_id'])
 
-            plugged_interfaces = []
-            cursor = MySQLdb.cursors.DictCursor(conn)
-            cursor.execute("SELECT * FROM ports where state = 'ACTIVE'")
-            rows = cursor.fetchall()
-            cursor.close()
-            port_bindings = {}
-            ports_string = ""
-            for r in rows:
-                ports_string = "%s %s" % (ports_string, r)
-                if r['interface_id']:
-                    vlan_id = str(vlan_bindings[r['network_id']]['vlan_id'])
-                    if self.process_port_binding(r['uuid'], r['network_id'],
-                                                 r['interface_id'], vlan_id):
-                        cursor = MySQLdb.cursors.DictCursor(conn)
-                        sql = PORT_OPSTATUS_UPDATESQL % (r['uuid'],
-                                                         OP_STATUS_UP)
-                        cursor.execute(sql)
-                        cursor.close()
-                    plugged_interfaces.append(r['interface_id'])
+        if old_port_bindings != port_bindings:
             LOG.debug("Port-bindings: %s" % ports_string)
-
             self.process_unplugged_interfaces(plugged_interfaces)
 
+        if old_vlan_bindings != vlan_bindings:
+            LOG.debug("VLAN-bindings: %s" % vlans_string)
             self.process_deleted_networks(vlan_bindings)
 
-            conn.commit()
+        conn.commit()
+        return {VLAN_BINDINGS: vlan_bindings,
+                PORT_BINDINGS: port_bindings}
+
+    def daemon_loop(self, conn):
+        old_vlan_bindings = {}
+        old_port_bindings = {}
+
+        while True:
+            bindings = self.manage_networks_on_host(conn,
+                                                    old_vlan_bindings,
+                                                    old_port_bindings)
+            old_vlan_bindings = bindings[VLAN_BINDINGS]
+            old_port_bindings = bindings[PORT_BINDINGS]
             time.sleep(self.polling_interval)
 
 if __name__ == "__main__":
@@ -453,6 +446,7 @@ if __name__ == "__main__":
           passwd=db_pass, db=db_name)
         plugin = LinuxBridgeQuantumAgent(br_name_prefix, physical_interface,
                                          polling_interval)
+        LOG.info("Agent initialized successfully, now running...")
         plugin.daemon_loop(conn)
     finally:
         if conn:
