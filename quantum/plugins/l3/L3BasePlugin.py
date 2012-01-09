@@ -18,7 +18,8 @@
 import logging
 
 from quantum.common import exceptions as exc
-from quantum.db import api as db
+#from quantum.db import api as db
+from quantum.plugins.l3.db import l3network_db as db
 
 LOG = logging.getLogger('quantum.plugins.L3BasePlugin')
 
@@ -29,11 +30,13 @@ class L3BasePlugin(object):
     """
 
     def __init__(self):
+        """
         db.configure_db({'sql_connection': 'sqlite:///:memory:'})
+        """
+        db.initialize()
         db.target_create("Private", None, description="System")
         db.target_create("Public", None, description="System")
         db.target_create("VPN", None, description="System")
-        L3BasePlugin._net_counter = 0
 
     def _get_subnet(self, tenant_id, subnet_id):
         try:

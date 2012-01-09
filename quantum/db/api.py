@@ -70,6 +70,7 @@ def get_session(autocommit=True, expire_on_commit=False):
 
 def register_models():
     """Register Models and create properties"""
+    LOG.debug("Register models called")
     global _ENGINE
     assert _ENGINE
     BASE.metadata.create_all(_ENGINE)
