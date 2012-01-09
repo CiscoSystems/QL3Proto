@@ -28,6 +28,14 @@ from quantum.common import exceptions as exception
 LOG = logging.getLogger('quantum.api.associations')
 
 
+def create_resource(plugin, version):
+    controller_dict = {
+                        '1.1': [ControllerV11(plugin),
+                                ControllerV11._serialization_metadata,
+                                common.XML_NS_V11]}
+    return common.create_resource(version, controller_dict)
+
+
 class Controller(common.QuantumController):
     """ Associations API controller for Quantum API """
 
@@ -35,54 +43,49 @@ class Controller(common.QuantumController):
         'param-name': 'routetable_id',
         'required': True}, ]
 
-    _serialization_metadata = {
-        "application/xml": {
-            "attributes": {
-                "association": ["routetable_id"]}
-        },
-    }
-
     def __init__(self, plugin):
         self._resource_name = 'association'
         super(Controller, self).__init__(plugin)
 
+    @common.APIFaultWrapper([exception.SubnetNotFound])
     def get_subnet_association(self, request, tenant_id, subnet_id):
-        try:
-            data = self._plugin.get_subnet_association(tenant_id,
-                                                         subnet_id)
-            builder = associations_view.get_view_builder(request)
-            result = builder.build(data)['association']
-            return dict(association=result)
-        except exception.SubnetNotFound as e:
-            return faults.Fault(faults.SubnetNotFound(e))
+        data = self._plugin.get_subnet_association(tenant_id,
+                                                     subnet_id)
+        builder = associations_view.get_view_builder(request, self.version)
+        result = builder.build(data)['association']
+        return dict(association=result)
 
-    def associate_subnet(self, request, tenant_id, subnet_id):
-        try:
-            request_params = \
-                self._parse_request_params(request,
-                                           self._attachment_ops_param_list)
-        except exc.HTTPError as e:
-            return faults.Fault(e)
-        try:
-            LOG.debug("Associating subnet: %s with Route-table: %s",
-                      (subnet_id, request_params['routetable_id']))
-            self._plugin.associate_subnet(tenant_id, subnet_id,
-                                          request_params['routetable_id'])
-            return exc.HTTPNoContent()
-        except exception.SubnetNotFound as e:
-            return faults.Fault(faults.SubnetNotFound(e))
-        except exception.RoutetableNotFound as e:
-            return faults.Fault(faults.RoutetableNotFound(e))
-        except exception.SubnetAlreadyAssociated as e:
-            return faults.Fault(faults.SubnetAlreadyAssociated(e))
+    @common.APIFaultWrapper([exception.SubnetNotFound,
+                             exception.RoutetableNotFound,
+                             exception.SubnetAlreadyAssociated])
+    def associate_subnet(self, request, tenant_id, subnet_id, body):
+        body = self._prepare_request_body(body,
+                                          self._attachment_ops_param_list)
+        LOG.debug("associate_subnet() body: %s", body)
+        LOG.debug("Associating subnet: %s with Route-table: %s",
+                  (subnet_id, body['association']['routetable_id']))
+        self._plugin.associate_subnet(tenant_id, subnet_id,
+                                      body['association']['routetable_id'],
+                                      **body)
 
+    @common.APIFaultWrapper([exception.SubnetNotFound,
+                             exception.RoutetableNotFound])
     def disassociate_subnet(self, request, tenant_id, subnet_id):
-        try:
-            data = self._plugin.disassociate_subnet(tenant_id, subnet_id)
-            builder = associations_view.get_view_builder(request)
-            result = builder.build(data)['association']
-            return dict(association=result)
-        except exception.SubnetNotFound as e:
-            return faults.Fault(faults.SubnetNotFound(e))
-        except exception.RoutetableNotFound as e:
-            return faults.Fault(faults.RoutetableNotFound(e))
+        data = self._plugin.disassociate_subnet(tenant_id, subnet_id)
+        builder = associations_view.get_view_builder(request, self.version)
+        result = builder.build(data)['association']
+        return dict(association=result)
+
+
+class ControllerV11(Controller):
+    """Association resources controller for Quantum v1.1 API
+    """
+
+    _serialization_metadata = {
+            "attributes": {
+                "association": ["routetable_id"]}
+    }
+
+    def __init__(self, plugin):
+        self.version = "1.1"
+        super(ControllerV11, self).__init__(plugin)

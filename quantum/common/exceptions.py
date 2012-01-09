@@ -139,11 +139,11 @@ class SubnetAlreadyAssociated(QuantumException):
 
 
 class InvalidCIDR(QuantumException):
-    message = _("CIDR %(CIDR)s is invalid")
+    message = _("CIDR %(cidr)s is invalid")
 
 
 class DuplicateCIDR(QuantumException):
-    message = _("Subnet with CIDR %(CIDR)s already exists")
+    message = _("Subnet with CIDR %(cidr)s already exists")
 
 
 class RoutetableNotFound(NotFound):
@@ -172,7 +172,7 @@ class DuplicateRoute(QuantumException):
                 "already exists")
 
 
-class TargetNotFound(QuantumException):
+class TargetNotFound(NotFound):
     message = _("Target %(target_id)s could not be found in the System " \
                 "Target Table")
 

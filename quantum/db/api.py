@@ -82,24 +82,6 @@ def unregister_models():
     BASE.metadata.drop_all(_ENGINE)
 
 
-def _check_duplicate_cidr(tenant_id, cidr):
-    """Checks whether a subnet with the same cidr
-       already exists for the tenant.
-    """
-
-    session = get_session()
-    try:
-        subnet = session.query(models.Subnet).\
-          filter_by(tenant_id=tenant_id, cidr=cidr).\
-          one()
-        raise q_exc.NetworkNameExists(tenant_id=tenant_id,
-                        cidr=cidr, subnet_id=subnet.uuid)
-    except exc.NoResultFound:
-        # this is the "normal" path, as API spec specifies
-        # that net-names are unique within a tenant
-        pass
-
-
 def network_create(tenant_id, name, op_status=OperationalStatus.UNKNOWN):
     session = get_session()
 
@@ -269,10 +251,29 @@ def port_destroy(port_id, net_id):
         raise q_exc.PortNotFound(port_id=port_id)
 
 
+def _check_duplicate_cidr(tenant_id, cidr):
+    """Checks whether a subnet with the same cidr
+       already exists for the tenant.
+    """
+    session = get_session()
+    try:
+        subnet = session.query(models.Subnet).\
+          filter_by(tenant_id=tenant_id, cidr=cidr).\
+          one()
+        raise q_exc.DuplicateCIDR(tenant_id=tenant_id,
+                                  cidr=cidr,
+                                  subnet_id=subnet.uuid)
+    except exc.NoResultFound:
+        # this is the "normal" path, as API spec specifies
+        # that CIDR has to be unique for a tenant
+        pass
+
+
 def subnet_create(tenant_id, cidr, network_id):
     session = get_session()
 
     with session.begin():
+        _check_duplicate_cidr(tenant_id, cidr)
         subnet = models.Subnet(tenant_id, cidr, network_id)
         session.add(subnet)
         session.flush()

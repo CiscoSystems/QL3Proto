@@ -1,6 +1,5 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-
-# Copyright 2010-2011 ????
+# Copyright 2011, Cisco Systems, Inc.
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -23,14 +22,24 @@ import unittest
 import quantum.tests.unit.testlib_l3api as testlib
 
 from quantum import api as server
-from quantum.common.serializer import Serializer
 from quantum.common.test_lib import test_config
 from quantum.db import api as db
+from quantum.wsgi import XMLDeserializer, JSONDeserializer
 
 LOG = logging.getLogger('quantum.tests.test_l3api')
 
+RESPONSE_CODE_CREATE = 202
+RESPONSE_CODE_UPDATE = 204
+RESPONSE_CODE_DELETE = 204
+RESPONSE_CODE_OTHERS = 200
+RESPONSE_CODE_SUBNET_NOTFOUND = 450
 
-class L3APITest(unittest.TestCase):
+XMLNS_KEY = 'xmlns'
+
+SUBNETS = 'subnets'
+
+
+class L3SubnetAbstractAPITest(unittest.TestCase):
 
     def _test_unparsable_data(self, format):
         LOG.debug("_test_unparsable_data - " \
@@ -49,7 +58,7 @@ class L3APITest(unittest.TestCase):
                   "format:%s - END", format)
 
     def _create_subnet(self, format, cidr=None, custom_req_body=None,
-                        expected_res_status=200):
+                        expected_res_status=RESPONSE_CODE_CREATE):
         LOG.debug("Creating subnet")
         content_type = "application/" + format
         if not cidr:
@@ -59,9 +68,13 @@ class L3APITest(unittest.TestCase):
                                                   custom_req_body)
         subnet_res = subnet_req.get_response(self.api)
         self.assertEqual(subnet_res.status_int, expected_res_status)
-        if expected_res_status in (200, 202):
+        if expected_res_status in (RESPONSE_CODE_CREATE, RESPONSE_CODE_OTHERS):
+            """
             subnet_data = Serializer().deserialize(subnet_res.body,
                                                     content_type)
+            """
+            subnet_data = self._subnet_deserializers[content_type].\
+                    deserialize(subnet_res.body)['body']
             return subnet_data['subnet']['id']
 
     def _test_create_subnet(self, format):
@@ -72,9 +85,13 @@ class L3APITest(unittest.TestCase):
                                                         subnet_id,
                                                         format)
         show_subnet_res = show_subnet_req.get_response(self.api)
-        self.assertEqual(show_subnet_res.status_int, 200)
+        self.assertEqual(show_subnet_res.status_int, RESPONSE_CODE_OTHERS)
+        """
         subnet_data = Serializer().deserialize(show_subnet_res.body,
                                                 content_type)
+        """
+        subnet_data = self._subnet_deserializers[content_type].\
+                deserialize(show_subnet_res.body)['body']
         self.assertEqual(subnet_id, subnet_data['subnet']['id'])
         LOG.debug("_test_create_subnet - format:%s - END", format)
 
@@ -95,9 +112,9 @@ class L3APITest(unittest.TestCase):
         list_subnet_req = testlib.subnet_list_request(self.tenant_id,
                                                         format)
         list_subnet_res = list_subnet_req.get_response(self.api)
-        self.assertEqual(list_subnet_res.status_int, 200)
-        subnet_data = self._subnet_serializer.deserialize(
-                           list_subnet_res.body, content_type)
+        self.assertEqual(list_subnet_res.status_int, RESPONSE_CODE_OTHERS)
+        subnet_data = self._subnet_deserializers[content_type].\
+                deserialize(list_subnet_res.body)['body']
         # Check subnet count: should return 2
         self.assertEqual(len(subnet_data['subnets']), 2)
         LOG.debug("_test_list_subnets - format:%s - END", format)
@@ -110,14 +127,14 @@ class L3APITest(unittest.TestCase):
         list_subnet_req = testlib.subnet_list_detail_request(self.tenant_id,
                                                                format)
         list_subnet_res = list_subnet_req.get_response(self.api)
-        self.assertEqual(list_subnet_res.status_int, 200)
-        subnet_data = self._subnet_serializer.deserialize(
-                           list_subnet_res.body, content_type)
+        self.assertEqual(list_subnet_res.status_int, RESPONSE_CODE_OTHERS)
+        subnet_data = self._subnet_deserializers[content_type].\
+                deserialize(list_subnet_res.body)['body']
         # Check subnet count: should return 2
         self.assertEqual(len(subnet_data['subnets']), 2)
         # Check contents - id & cidr for each subnet
         for subnet in subnet_data['subnets']:
-            self.assertTrue('id' in subnet and 'cidr' in subnet)
+            self.assertTrue('id' in subnet.keys() and 'cidr' in subnet.keys())
             self.assertTrue(subnet['id'] and subnet['cidr'])
         LOG.debug("_test_list_subnets_detail - format:%s - END", format)
 
@@ -129,9 +146,10 @@ class L3APITest(unittest.TestCase):
                                                         subnet_id,
                                                         format)
         show_subnet_res = show_subnet_req.get_response(self.api)
-        self.assertEqual(show_subnet_res.status_int, 200)
-        subnet_data = self._subnet_serializer.deserialize(
-                           show_subnet_res.body, content_type)['subnet']
+        self.assertEqual(show_subnet_res.status_int, RESPONSE_CODE_OTHERS)
+        subnet_data = self._subnet_deserializers[content_type].\
+                deserialize(show_subnet_res.body)['body']['subnet']
+        subnet_data = self._remove_non_attribute_keys(subnet_data)
         #TODO (Sumit): The assertion for the network_id needs to be different
         self.assertEqual({'id': subnet_id,
                           'cidr': self.cidr,
@@ -148,9 +166,10 @@ class L3APITest(unittest.TestCase):
         show_subnet_req = testlib.show_subnet_detail_request(
                                     self.tenant_id, subnet_id, format)
         show_subnet_res = show_subnet_req.get_response(self.api)
-        self.assertEqual(show_subnet_res.status_int, 200)
-        subnet_data = self._subnet_serializer.deserialize(
-                           show_subnet_res.body, content_type)['subnet']
+        self.assertEqual(show_subnet_res.status_int, RESPONSE_CODE_OTHERS)
+        subnet_data = self._subnet_deserializers[content_type].\
+                deserialize(show_subnet_res.body)['body']['subnet']
+        subnet_data = self._remove_non_attribute_keys(subnet_data)
         #TODO (Sumit): The assertion for the network_id needs to be different
         self.assertEqual({'id': subnet_id,
                           'cidr': self.cidr,
@@ -177,14 +196,16 @@ class L3APITest(unittest.TestCase):
                                                             new_cidr,
                                                             format)
         update_subnet_res = update_subnet_req.get_response(self.api)
-        self.assertEqual(update_subnet_res.status_int, 204)
+        self.assertEqual(update_subnet_res.status_int, RESPONSE_CODE_UPDATE)
         show_subnet_req = testlib.show_subnet_request(self.tenant_id,
                                                         subnet_id,
                                                         format)
         show_subnet_res = show_subnet_req.get_response(self.api)
-        self.assertEqual(show_subnet_res.status_int, 200)
-        subnet_data = self._subnet_serializer.deserialize(
-                           show_subnet_res.body, content_type)['subnet']
+        self.assertEqual(show_subnet_res.status_int, RESPONSE_CODE_OTHERS)
+        subnet_data = self._subnet_deserializers[content_type].\
+                deserialize(show_subnet_res.body)['body']['subnet']
+        LOG.debug("subnet_data is :%s", subnet_data)
+        subnet_data = self._remove_non_attribute_keys(subnet_data)
         #TODO (Sumit): The assertion for the network_id needs to be different
         self.assertEqual({'id': subnet_id,
                           'cidr': new_cidr,
@@ -229,24 +250,35 @@ class L3APITest(unittest.TestCase):
                                                             subnet_id,
                                                             format)
         delete_subnet_res = delete_subnet_req.get_response(self.api)
-        self.assertEqual(delete_subnet_res.status_int, 204)
-        list_subnet_req = testlib.subnet_list_request(self.tenant_id,
-                                                        format)
-        list_subnet_res = list_subnet_req.get_response(self.api)
-        subnet_list_data = self._subnet_serializer.deserialize(
-                                list_subnet_res.body, content_type)
-        subnet_count = len(subnet_list_data['subnets'])
-        self.assertEqual(subnet_count, 0)
+        self.assertEqual(delete_subnet_res.status_int, RESPONSE_CODE_DELETE)
+        delete_subnet_req = testlib.subnet_delete_request(self.tenant_id,
+                                                            subnet_id,
+                                                            format)
+        delete_subnet_res = delete_subnet_req.get_response(self.api)
+        self.assertEqual(delete_subnet_res.status_int,
+                         RESPONSE_CODE_SUBNET_NOTFOUND)
         LOG.debug("_test_delete_subnet - format:%s - END", format)
 
-    def setUp(self):
+    def _remove_non_attribute_keys(self, data_dict):
+        if XMLNS_KEY  in data_dict.keys():
+            data_dict.pop(XMLNS_KEY)
+        return data_dict
+
+    def setUp(self, api_router_klass, xml_metadata_dict):
         options = {}
         options['plugin_l3provider'] = test_config['l3plugin_name']
         self.api = server.APIRouterV11(options)
         self.tenant_id = "test_tenant"
         self.cidr = "10.0.0.0/24"
-        self._subnet_serializer = \
-            Serializer(server.subnets.Controller._serialization_metadata)
+        # Prepare XML & JSON deserializers
+        subnet_xml_deserializer = XMLDeserializer(xml_metadata_dict[SUBNETS])
+
+        json_deserializer = JSONDeserializer()
+
+        self._subnet_deserializers = {
+            'application/xml': subnet_xml_deserializer,
+            'application/json': json_deserializer,
+        }
 
     def tearDown(self):
         """Clear the test environment"""

@@ -28,6 +28,14 @@ from quantum.common import exceptions as exception
 LOG = logging.getLogger('quantum.api.routes')
 
 
+def create_resource(plugin, version):
+    controller_dict = {
+                        '1.1': [ControllerV11(plugin),
+                                ControllerV11._serialization_metadata,
+                                common.XML_NS_V11]}
+    return common.create_resource(version, controller_dict)
+
+
 class Controller(common.QuantumController):
     """ Routes API controller for Quantum API """
 
@@ -39,13 +47,6 @@ class Controller(common.QuantumController):
         {'param-name': 'target',
         'required': False}]
 
-    _serialization_metadata = {
-        "application/xml": {
-            "attributes": {
-                "route": ["id", "source", "destination", "target"]},
-            "plurals": {"routes": "route"}},
-    }
-
     def __init__(self, plugin):
         self._resource_name = 'route'
         super(Controller, self).__init__(plugin)
@@ -55,33 +56,33 @@ class Controller(common.QuantumController):
         """ Returns the details of a route """
         route = self._plugin.get_route_details(tenant_id, routetable_id,
                                                route_id)
-        builder = routes_view.get_view_builder(req)
+        builder = routes_view.get_view_builder(req, self.version)
         result = builder.build(route, route_details)['route']
         return dict(route=result)
 
     def _items(self, req, tenant_id, routetable_id, route_details=False):
         """ Returns a list of routes. """
         routes = self._plugin.get_all_routes(tenant_id, routetable_id)
-        builder = routes_view.get_view_builder(req)
+        builder = routes_view.get_view_builder(req, self.version)
         result = [builder.build(route, route_details)['route']
                   for route in routes]
         return dict(routes=result)
 
+    @common.APIFaultWrapper()
     def index(self, request, tenant_id, routetable_id):
         """ Returns a list of routes for this routetable """
         return self._items(request, tenant_id, routetable_id,
                            route_details=True)
 
+    @common.APIFaultWrapper([exception.RoutetableNotFound,
+                             exception.RouteNotFound])
     def show(self, request, tenant_id, routetable_id, id):
         """ Returns route details for the given route id """
-        try:
-            return self._item(request, tenant_id, routetable_id, id,
-                              route_details=True)
-        except exception.RoutetableNotFound as e:
-            return faults.Fault(faults.RoutetableNotFound(e))
-        except exception.RouteNotFound as e:
-            return faults.Fault(faults.RouteNotFound(e))
+        return self._item(request, tenant_id, routetable_id, id,
+                          route_details=True)
 
+    @common.APIFaultWrapper([exception.RoutetableNotFound,
+                             exception.RouteNotFound])
     def detail(self, request, **kwargs):
         tenant_id = kwargs.get('tenant_id')
         routetable_id = kwargs.get('routetable_id')
@@ -95,40 +96,41 @@ class Controller(common.QuantumController):
             return self._items(request, tenant_id, routetable_id,
                                route_details=True)
 
-    def create(self, request, tenant_id, routetable_id):
+    @common.APIFaultWrapper([exception.RoutetableNotFound,
+                             exception.RouteSourceInvalid,
+                             exception.RouteDestinationInvalid,
+                             exception.RouteTargetInvalid,
+                             exception.DuplicateRoute])
+    def create(self, request, tenant_id, routetable_id, body):
         """ Creates a new route in a routetable for a given tenant """
-        try:
-            print("inside routes.py, request: %s", request)
-            request_params = \
-                self._parse_request_params(request,
-                                           self._route_ops_param_list)
-        except exc.HTTPError as e:
-            return faults.Fault(e)
-        try:
-            route = self._plugin.\
-                       create_route(tenant_id, routetable_id,
-                                    **request_params)
-        except exception.RouteSourceInvalid as invalidsource:
-            return faults.Fault(faults.RouteSourceInvalid(invalidsource))
-        except exception.RouteDestinationInvalid as invaliddestination:
-            return faults.\
-                   Fault(faults.RouteDestinationInvalid(invaliddestination))
-        except exception.RouteTargetInvalid as invalidtarget:
-            return faults.Fault(faults.RouteTargetInvalid(invalidtarget))
-        except exception.DuplicateRoute as duplicateroute:
-            return faults.Fault(faults.DuplicateRoute(duplicateroute))
-        except exception.RoutetableNotFound as notfoundexcp:
-            return faults.Fault(faults.RoutetableNotFound(notfoundexcp))
-        builder = routes_view.get_view_builder(request)
+        body = self._prepare_request_body(body, self._route_ops_param_list)
+        LOG.debug("create() body: %s", body)
+        route = self._plugin.\
+                       create_route(tenant_id, routetable_id, 
+                                    body['route']['source'],
+                                    body['route']['destination'],
+                                    body['route']['target'], **body)
+        builder = routes_view.get_view_builder(request, self.version)
         result = builder.build(route, route_details=True)['route']
-        return self._build_response(request, dict(route=result), 200)
+        return dict(route=result)
 
+    @common.APIFaultWrapper([exception.RoutetableNotFound,
+                             exception.RouteNotFound])
     def delete(self, request, tenant_id, routetable_id, id):
         """ Deletes the route with the specific route ID """
-        try:
-            self._plugin.delete_route(tenant_id, routetable_id, id)
-            return exc.HTTPNoContent()
-        except exception.RoutetableNotFound as e:
-            return faults.Fault(faults.RoutetableNotFound(e))
-        except exception.RouteNotFound as e:
-            return faults.Fault(faults.RouteNotFound(e))
+        self._plugin.delete_route(tenant_id, routetable_id, id)
+
+
+class ControllerV11(Controller):
+    """Route resources controller for Quantum v1.1 API
+    """
+
+    _serialization_metadata = {
+            "attributes": {
+                "route": ["id", "source", "destination", "target"]},
+            "plurals": {"routes": "route"}
+    }
+
+    def __init__(self, plugin):
+        self.version = "1.1"
+        super(ControllerV11, self).__init__(plugin)

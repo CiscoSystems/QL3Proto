@@ -28,20 +28,20 @@ from quantum.common import exceptions as exception
 LOG = logging.getLogger('quantum.api.subnets')
 
 
+def create_resource(plugin, version):
+    controller_dict = {
+                        '1.1': [ControllerV11(plugin),
+                                ControllerV11._serialization_metadata,
+                                common.XML_NS_V11]}
+    return common.create_resource(version, controller_dict)
+
+
 class Controller(common.QuantumController):
     """ Subnet API controller for Quantum API """
 
     _subnet_ops_param_list = [{
         'param-name': 'cidr',
         'required': True}, ]
-
-    _serialization_metadata = {
-        "application/xml": {
-            "attributes": {
-                "subnet": ["id", "cidr", "network_id"],
-                "association": ["routetable_id"]},
-            "plurals": {"subnets": "subnet"}},
-    }
 
     def __init__(self, plugin):
         self._resource_name = 'subnet'
@@ -51,30 +51,30 @@ class Controller(common.QuantumController):
               subnet_details=True):
         subnet = self._plugin.get_subnet_details(
                             tenant_id, subnet_id)
-        builder = subnets_view.get_view_builder(req)
+        builder = subnets_view.get_view_builder(req, self.version)
         result = builder.build(subnet, subnet_details)['subnet']
         return dict(subnet=result)
 
     def _items(self, req, tenant_id, subnet_details=False):
         """ Returns a list of subnets. """
         subnets = self._plugin.get_all_subnets(tenant_id)
-        builder = subnets_view.get_view_builder(req)
+        builder = subnets_view.get_view_builder(req, self.version)
         result = [builder.build(subnet, subnet_details)['subnet']
                   for subnet in subnets]
         return dict(subnets=result)
 
+    @common.APIFaultWrapper()
     def index(self, request, tenant_id):
         """ Returns a list of subnet ids """
         return self._items(request, tenant_id)
 
+    @common.APIFaultWrapper([exception.SubnetNotFound])
     def show(self, request, tenant_id, id):
         """ Returns subnet details for the given subnet id """
-        try:
-            return self._item(request, tenant_id, id,
-                              subnet_details=True)
-        except exception.SubnetNotFound as e:
-            return faults.Fault(faults.SubnetNotFound(e))
+        return self._item(request, tenant_id, id,
+                          subnet_details=True)
 
+    @common.APIFaultWrapper([exception.SubnetNotFound])
     def detail(self, request, **kwargs):
         tenant_id = kwargs.get('tenant_id')
         subnet_id = kwargs.get('id')
@@ -86,56 +86,44 @@ class Controller(common.QuantumController):
             # show details for all subnets
             return self._items(request, tenant_id, subnet_details=True)
 
-    def create(self, request, tenant_id):
+    @common.APIFaultWrapper([exception.InvalidCIDR, exception.DuplicateCIDR,
+                             exception.NetworkNotFound])
+    def create(self, request, tenant_id, body):
         """ Creates a new subnet for a given tenant """
-        try:
-            request_params = \
-                self._parse_request_params(request,
-                                           self._subnet_ops_param_list)
-        except exc.HTTPError as e:
-            return faults.Fault(e)
-        try:
-            LOG.debug("create() request_params: %s", request_params)
-            cidr = request_params['cidr']
-            #subnet = self._plugin.\
-            #           create_subnet(tenant_id, cidr, **request_params)
-            subnet = self._plugin.\
-                       create_subnet(tenant_id, **request_params)
-        except exception.InvalidCIDR as invalidcidr:
-            return faults.Fault(faults.InvalidCIDR(invalidcidr))
-        except exception.DuplicateCIDR as duplicatecidr:
-            return faults.Fault(faults.DuplicateCIDR(duplicatecidr))
-        except exception.NetworkNotFound as notfoundexcp:
-            return faults.Fault(faults.NetworkNotFound(notfoundexcp))
-        builder = subnets_view.get_view_builder(request)
+        body = self._prepare_request_body(body, self._subnet_ops_param_list)
+        LOG.debug("create() body: %s", body)
+        subnet = self._plugin.create_subnet(tenant_id,
+                                            body['subnet']['cidr'],
+                                            **body)
+        builder = subnets_view.get_view_builder(request, self.version)
         result = builder.build(subnet)['subnet']
-        return self._build_response(request, dict(subnet=result), 200)
+        return dict(subnet=result)
 
-    def update(self, request, tenant_id, id):
+    @common.APIFaultWrapper([exception.SubnetNotFound, exception.InvalidCIDR,
+                             exception.DuplicateCIDR,
+                             exception.NetworkNotFound])
+    def update(self, request, tenant_id, id, body):
         """ Updates the name for the subnet with the given id """
-        try:
-            request_params = \
-                self._parse_request_params(request,
-                                           self._subnet_ops_param_list)
-        except exc.HTTPError as e:
-            return faults.Fault(e)
-        try:
-            self._plugin.update_subnet(tenant_id, id,
-                                        **request_params)
-            return exc.HTTPNoContent()
-        except exception.SubnetNotFound as e:
-            return faults.Fault(faults.SubnetNotFound(e))
-        except exception.InvalidCIDR as invalidcidr:
-            return faults.Fault(faults.InvalidCIDR(invalidcidr))
-        except exception.DuplicateCIDR as duplicatecidr:
-            return faults.Fault(faults.DuplicateCIDR(duplicatecidr))
-        except exception.NetworkNotFound as notfoundexcp:
-            return faults.Fault(faults.NetworkNotFound(notfoundexcp))
+        body = self._prepare_request_body(body, self._subnet_ops_param_list)
+        LOG.debug("update() body: %s", body)
+        self._plugin.update_subnet(tenant_id, id, **body['subnet'])
 
+    @common.APIFaultWrapper([exception.SubnetNotFound])
     def delete(self, request, tenant_id, id):
         """ Destroys the subnet with the given id """
-        try:
-            self._plugin.delete_subnet(tenant_id, id)
-            return exc.HTTPNoContent()
-        except exception.SubnetNotFound as e:
-            return faults.Fault(faults.SubnetNotFound(e))
+        self._plugin.delete_subnet(tenant_id, id)
+
+
+class ControllerV11(Controller):
+    """Subnet resources controller for Quantum v1.1 API
+    """
+    _serialization_metadata = {
+            "attributes": {
+                "subnet": ["id", "cidr", "network_id"],
+                "association": ["routetable_id"]},
+            "plurals": {"subnets": "subnet"}
+    }
+
+    def __init__(self, plugin):
+        self.version = "1.1"
+        super(ControllerV11, self).__init__(plugin)
