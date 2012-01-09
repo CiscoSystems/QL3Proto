@@ -106,7 +106,7 @@ class Controller(common.QuantumController):
         body = self._prepare_request_body(body, self._route_ops_param_list)
         LOG.debug("create() body: %s", body)
         route = self._plugin.\
-                       create_route(tenant_id, routetable_id, 
+                       create_route(tenant_id, routetable_id,
                                     body['route']['source'],
                                     body['route']['destination'],
                                     body['route']['target'], **body)
