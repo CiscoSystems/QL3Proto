@@ -20,6 +20,8 @@ import logging
 from quantum.common import exceptions as exc
 from quantum.db import api as db
 
+from L3BasePlugin import *
+
 LOG = logging.getLogger('quantum.plugins.L3LinuxBridgePlugin')
 
 
@@ -29,5 +31,4 @@ class L3LinuxBridgePlugin(L3BasePlugin):
     """
 
     def __init__(self):
-        //do DB initialization here
-
+        super(L3LinuxBridgePlugin, self).__init__()
