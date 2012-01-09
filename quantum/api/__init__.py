@@ -65,7 +65,6 @@ class APIRouter(wsgi.Router):
         # Note(salvatore-orlando): Should the plugin be versioned
         # I don't think so
         plugin = manager.QuantumManager.get_plugin(options)
-        l3plugin = manager.QuantumManager.get_l3plugin(options)
 
         uri_prefix = '/tenants/{tenant_id}/'
         mapper.resource('network', 'networks',
@@ -100,19 +99,42 @@ class APIRouter(wsgi.Router):
                        action="detach_resource",
                        conditions=dict(method=['DELETE']))
 
+
+class APIRouterV10(APIRouter):
+    """
+    API routes mappings for Quantum API v1.0
+    """
+    _version = '1.0'
+
+
+class APIRouterV11(APIRouter):
+    """
+    API routes mappings for Quantum API v1.1
+    """
+    _version = '1.1'
+
+    def _setup_base_routes(self, mapper, options, version):
+        """Routes specific to 1.1 version."""
+        super(APIRouterV11, self)._setup_base_routes(mapper, options,
+                                                     version)
+        l3plugin = manager.QuantumManager.get_l3plugin(options)
+
+        uri_prefix = '/tenants/{tenant_id}/'
+
         mapper.resource('subnet', 'subnets',
-                        controller=subnets.Controller(l3plugin),
+                        controller=subnets.create_resource(l3plugin, version),
                         collection={'detail': 'GET'},
                         member={'detail': 'GET'},
                         path_prefix=uri_prefix)
 
         mapper.resource('routetable', 'routetables',
-                        controller=routetables.Controller(l3plugin),
+                        controller=routetables.create_resource(l3plugin,
+                                                               version),
                         collection={'detail': 'GET'},
                         member={'detail': 'GET'},
                         path_prefix=uri_prefix)
 
-        l3routes_ctrl = l3routes.Controller(l3plugin)
+        l3routes_ctrl = l3routes.create_resource(l3plugin, version)
         mapper.resource('route', 'routes',
                         controller=l3routes_ctrl,
                         collection={'detail': 'GET'},
@@ -121,7 +143,7 @@ class APIRouter(wsgi.Router):
                                              collection_name=uri_prefix +\
                                                  'routetables'))
 
-        targets_ctrl = targets.Controller(l3plugin)
+        targets_ctrl = targets.create_resource(l3plugin, version)
         mapper.connect("get_all_targets",
                        uri_prefix + 'routetables/{routetable_id}/' \
                                     'targets{.format}',
@@ -129,7 +151,7 @@ class APIRouter(wsgi.Router):
                        action="get_all_targets",
                        conditions=dict(method=['GET']))
 
-        associations_ctrl = associations.Controller(l3plugin)
+        associations_ctrl = associations.create_resource(l3plugin, version)
         mapper.connect("get_subnet_association",
                        uri_prefix + 'subnets/{subnet_id}/' \
                                     'association{.format}',
@@ -168,17 +190,3 @@ class APIRouter(wsgi.Router):
                        action="index",
                        conditions=dict(method=['GET']))
         """
-
-
-class APIRouterV10(APIRouter):
-    """
-    API routes mappings for Quantum API v1.0
-    """
-    _version = '1.0'
-
-
-class APIRouterV11(APIRouter):
-    """
-    API routes mappings for Quantum API v1.1
-    """
-    _version = '1.1'
