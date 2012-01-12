@@ -1,0 +1,9 @@
+*.pyc
+*.DS_Store
+build/*
+build-stamp
+run_tests.err.log
+run_tests.log
+tests/
+.quantum-venv/
+.venv/

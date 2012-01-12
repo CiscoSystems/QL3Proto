@@ -177,6 +177,14 @@ class TargetNotFound(QuantumException):
                 "Table")
 
 
+class InvalidCommandError(QuantumException):
+    message = _("Command %(command)s is invalid.")
+
+
+class ServiceContactError(QuantumException):
+    message = _("Error contacting service '%(service)s'. Please check your settings")
+
+
 class Duplicate(Error):
     pass
 
