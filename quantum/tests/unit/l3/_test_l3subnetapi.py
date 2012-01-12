@@ -19,27 +19,25 @@ import logging
 import unittest
 
 
-import quantum.tests.unit.testlib_l3api as testlib
+import quantum.tests.unit.l3.testlib_l3subnetapi as testlib
 
 from quantum import api as server
 from quantum.common.test_lib import test_config
 from quantum.db import api as db
+from quantum.tests.unit.l3._test_l3api import *
 from quantum.wsgi import XMLDeserializer, JSONDeserializer
 
-LOG = logging.getLogger('quantum.tests.test_l3api')
 
-RESPONSE_CODE_CREATE = 202
-RESPONSE_CODE_UPDATE = 204
-RESPONSE_CODE_DELETE = 204
-RESPONSE_CODE_OTHERS = 200
+LOG = logging.getLogger(__name__)
+
+
 RESPONSE_CODE_SUBNET_NOTFOUND = 450
 
-XMLNS_KEY = 'xmlns'
 
 SUBNETS = 'subnets'
 
 
-class L3SubnetAbstractAPITest(unittest.TestCase):
+class L3SubnetAbstractAPITest(L3AbstractAPITest):
 
     def _test_unparsable_data(self, format):
         LOG.debug("_test_unparsable_data - " \
@@ -49,10 +47,10 @@ class L3SubnetAbstractAPITest(unittest.TestCase):
         method = 'POST'
         content_type = "application/%s" % format
         tenant_id = self.tenant_id
-        path = "/tenants/%(tenant_id)s/networks.%(format)s" % locals()
-        network_req = testlib.create_request(path, data, content_type, method)
-        network_res = network_req.get_response(self.api)
-        self.assertEqual(network_res.status_int, 400)
+        path = "/tenants/%(tenant_id)s/subnets.%(format)s" % locals()
+        subnet_req = testlib.create_request(path, data, content_type, method)
+        subnet_res = subnet_req.get_response(self.api)
+        self.assertEqual(subnet_res.status_int, 400)
 
         LOG.debug("_test_unparsable_data - " \
                   "format:%s - END", format)
@@ -259,15 +257,9 @@ class L3SubnetAbstractAPITest(unittest.TestCase):
                          RESPONSE_CODE_SUBNET_NOTFOUND)
         LOG.debug("_test_delete_subnet - format:%s - END", format)
 
-    def _remove_non_attribute_keys(self, data_dict):
-        if XMLNS_KEY  in data_dict.keys():
-            data_dict.pop(XMLNS_KEY)
-        return data_dict
-
     def setUp(self, api_router_klass, xml_metadata_dict):
-        options = {}
-        options['plugin_l3provider'] = test_config['l3plugin_name']
-        self.api = server.APIRouterV11(options)
+        super(L3SubnetAbstractAPITest, self).setUp(api_router_klass,
+                                                   xml_metadata_dict)
         self.tenant_id = "test_tenant"
         self.cidr = "10.0.0.0/24"
         # Prepare XML & JSON deserializers
@@ -282,8 +274,7 @@ class L3SubnetAbstractAPITest(unittest.TestCase):
 
     def tearDown(self):
         """Clear the test environment"""
-        # Remove database contents
-        db.clear_db()
+        super(L3SubnetAbstractAPITest, self).tearDown()
 
     def test_list_subnets_json(self):
         self._test_list_subnets('json')

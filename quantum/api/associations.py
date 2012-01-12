@@ -61,16 +61,20 @@ class Controller(common.QuantumController):
     def associate_subnet(self, request, tenant_id, subnet_id, body):
         body = self._prepare_request_body(body,
                                           self._attachment_ops_param_list)
-        LOG.debug("associate_subnet() body: %s", body)
-        LOG.debug("Associating subnet: %s with Route-table: %s",
+        LOG.debug("associate_subnet() body: %s" % body)
+        LOG.debug("Associating subnet: %s with Route-table: %s" % \
                   (subnet_id, body['association']['routetable_id']))
-        self._plugin.associate_subnet(tenant_id, subnet_id,
-                                      body['association']['routetable_id'],
-                                      **body)
+        data = self._plugin.associate_subnet(tenant_id, subnet_id,
+                                             body['association']\
+                                             ['routetable_id'])
+        builder = associations_view.get_view_builder(request, self.version)
+        result = builder.build(data)['association']
+        return dict(association=result)
 
     @common.APIFaultWrapper([exception.SubnetNotFound,
                              exception.RoutetableNotFound])
     def disassociate_subnet(self, request, tenant_id, subnet_id):
+        LOG.debug("disassociate_subnet() body: %s" % subnet_id)
         data = self._plugin.disassociate_subnet(tenant_id, subnet_id)
         builder = associations_view.get_view_builder(request, self.version)
         result = builder.build(data)['association']

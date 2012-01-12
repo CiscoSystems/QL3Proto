@@ -341,7 +341,8 @@ class Client(object):
         """
         Fetches a list of all routes for a tenant
         """
-        return self.do_request("GET", self.routes_path % routetable)
+        return self.do_request("GET", self.routes_path % routetable,
+                               exception_args={"routetable_id": routetable})
 
     @ApiCall
     def create_route(self, routetable, body=None):

@@ -68,7 +68,7 @@ class Controller(common.QuantumController):
                   for route in routes]
         return dict(routes=result)
 
-    @common.APIFaultWrapper()
+    @common.APIFaultWrapper([exception.RoutetableNotFound])
     def index(self, request, tenant_id, routetable_id):
         """ Returns a list of routes for this routetable """
         return self._items(request, tenant_id, routetable_id,
