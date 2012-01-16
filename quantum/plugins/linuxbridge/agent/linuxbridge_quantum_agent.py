@@ -382,11 +382,13 @@ class LinuxBridgeQuantumAgent:
 
         if old_port_bindings != port_bindings:
             LOG.debug("Port-bindings: %s" % ports_string)
-            self.process_unplugged_interfaces(plugged_interfaces)
+
+        self.process_unplugged_interfaces(plugged_interfaces)
 
         if old_vlan_bindings != vlan_bindings:
             LOG.debug("VLAN-bindings: %s" % vlans_string)
-            self.process_deleted_networks(vlan_bindings)
+
+        self.process_deleted_networks(vlan_bindings)
 
         conn.commit()
         return {VLAN_BINDINGS: vlan_bindings,
