@@ -187,10 +187,10 @@ class LinuxBridge:
                 return
             if self.run_cmd(['ip', 'link', 'set', bridge_name, 'up']):
                 return
-            if self.run_cmd(['brctl', 'addif', bridge_name, interface]):
-                return
             LOG.debug("Done starting bridge %s for subinterface %s" %
                       (bridge_name, interface))
+
+        self.run_cmd(['brctl', 'addif', bridge_name, interface])
 
     def add_tap_interface(self, network_id, vlan_id, tap_device_name):
         """
