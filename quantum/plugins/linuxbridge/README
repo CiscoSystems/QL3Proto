@@ -56,9 +56,12 @@ These need to copied to the compute node in the appropriate locations.
    to:
    nova/network/quantum/linux_net_linux_bridge.py
 
+(Note: For more details on how to work with Quantum using Nova, i.e. how to create networks and such,
+ please refer to the top level Quantum README which points to the relevant documentation.)
+
 # -- Quantum configuration
 
-Make the openvswitch plugin the current quantum plugin
+Make the Linux Bridge plugin the current quantum plugin
 
 - edit etc/plugins.ini and change the provider line to be:
 provider = quantum.plugins.linuxbridge.LinuxBridgePlugin.LinuxBridgePlugin
@@ -84,6 +87,10 @@ $ mysql -u root -p
 mysql> GRANT USAGE ON *.* to root@'yourremotehost' IDENTIFIED BY 'newpassword';
 # force update of authorization changes
 mysql> FLUSH PRIVILEGES;
+
+(Note: If the remote connection fails to MySQL, you might need to add the IP address,
+ and/or fully-qualified hostname, and/or unqualified hostname in the above GRANT sql
+ command. Also, you might need to specify "ALL" instead of "USAGE".)
 
 # -- Plugin configuration
 

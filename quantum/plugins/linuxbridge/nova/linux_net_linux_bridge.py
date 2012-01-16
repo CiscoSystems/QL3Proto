@@ -52,6 +52,21 @@ class QuantumLibvirtLinuxBridgeDriver(LinuxNetInterfaceDriver):
         LOG.debug(_("inside plug()"))
         dev = self.get_dev(network)
         bridge = self.get_bridge(network)
+        if not gateway:
+            # If we weren't instructed to act as a gateway then add the
+            # appropriate flows to block all non-dhcp traffic.
+            # .. and make sure iptbles won't forward it as well.
+            iptables_manager.ipv4['filter'].add_rule('FORWARD',
+                    '--in-interface %s -j DROP' % bridge)
+            iptables_manager.ipv4['filter'].add_rule('FORWARD',
+                    '--out-interface %s -j DROP' % bridge)
+            return bridge
+        else:
+            iptables_manager.ipv4['filter'].add_rule('FORWARD',
+                    '--in-interface %s -j ACCEPT' % bridge)
+            iptables_manager.ipv4['filter'].add_rule('FORWARD',
+                    '--out-interface %s -j ACCEPT' % bridge)
+
         if not _device_exists(dev):
             try:
                 # First, try with 'ip'
@@ -63,19 +78,6 @@ class QuantumLibvirtLinuxBridgeDriver(LinuxNetInterfaceDriver):
             utils.execute('ip', 'link', 'set', dev, "address", mac_address,
                           run_as_root=True)
             utils.execute('ip', 'link', 'set', dev, 'up', run_as_root=True)
-            if not gateway:
-                # If we weren't instructed to act as a gateway then add the
-                # appropriate flows to block all non-dhcp traffic.
-                # .. and make sure iptbles won't forward it as well.
-                iptables_manager.ipv4['filter'].add_rule('FORWARD',
-                        '--in-interface %s -j DROP' % bridge)
-                iptables_manager.ipv4['filter'].add_rule('FORWARD',
-                        '--out-interface %s -j DROP' % bridge)
-            else:
-                iptables_manager.ipv4['filter'].add_rule('FORWARD',
-                        '--in-interface %s -j ACCEPT' % bridge)
-                iptables_manager.ipv4['filter'].add_rule('FORWARD',
-                        '--out-interface %s -j ACCEPT' % bridge)
 
         if not _device_exists(bridge):
             LOG.debug(_("Starting bridge %s "), bridge)
@@ -87,7 +89,12 @@ class QuantumLibvirtLinuxBridgeDriver(LinuxNetInterfaceDriver):
             utils.execute('ip', 'link', 'set', bridge, 'up', run_as_root=True)
             LOG.debug(_("Done starting bridge %s"), bridge)
 
-        return bridge
+        full_ip = '%s/%s' % (network['dhcp_server'],
+                             network['cidr'].rpartition('/')[2])
+        utils.execute('ip', 'address', 'add', full_ip, 'dev', bridge,
+                run_as_root=True)
+
+        return dev
 
     def unplug(self, network):
         LOG.debug(_("inside unplug()"))
@@ -108,12 +115,3 @@ class QuantumLibvirtLinuxBridgeDriver(LinuxNetInterfaceDriver):
     def get_bridge(self, network):
         bridge = BRDIGE_NAME_PREFIX + str(network['uuid'][0:11])
         return bridge
-
-
-if __name__ == "__main__":
-    network_ref = {}
-    network_ref['dhcp_server'] = "10.0.0.1"
-    network_ref['uuid'] = '5c843d42-d2c2-45bf-8f48-9e7d5374933c'
-    network_ref['cidr'] = '10.0.0.0/24'
-    network_ref['broadcast'] = '255.255.255.0'
-    initialize_gateway_device("gw-5c843d42-d2", network_ref)
