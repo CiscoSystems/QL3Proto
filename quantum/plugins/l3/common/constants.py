@@ -19,6 +19,16 @@
 #
 """
 
+CIDR = 'cidr'
+
+ROUTE_SOURCE = 'source'
+ROUTE_DESTINATION = 'destination'
+ROUTE_TARGET = 'target'
+
+DESTINATION_DEFAULT = '0.0.0.0'
+
+TARGET_PUBLIC = 'PUBLIC'
+
 USERNAME = 'username'
 PASSWORD = 'password'
 

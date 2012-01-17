@@ -17,7 +17,7 @@
 
 from sqlalchemy.orm import exc
 
-from quantum.db.api import *
+from quantum.db.l3.api import *
 from quantum.plugins.l3 import plugin_configuration as conf
 
 import logging as LOG
@@ -27,4 +27,5 @@ def initialize():
     'Establish database connection and load models'
     options = {"sql_connection": "mysql://%s:%s@%s/%s" % (conf.DB_USER,
     conf.DB_PASS, conf.DB_HOST, conf.DB_NAME)}
+    LOG.debug("MySQL options are: %s", options)
     configure_db(options)
