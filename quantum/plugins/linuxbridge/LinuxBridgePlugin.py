@@ -1,3 +1,4 @@
+"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # Copyright 2011, Cisco Systems, Inc.
@@ -14,6 +15,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
+"""
 
 import logging
 
@@ -25,7 +27,8 @@ from quantum.plugins.linuxbridge.common import utils as cutil
 from quantum.plugins.linuxbridge.db import api as db
 from quantum.plugins.linuxbridge.db import l2network_db as cdb
 
-LOG = logging.getLogger('quantum.plugins.linuxbridge.LinuxBridgePlugin')
+
+LOG = logging.getLogger(__name__)
 
 
 class LinuxBridgePlugin(object):
@@ -37,10 +40,9 @@ class LinuxBridgePlugin(object):
     """
 
     def __init__(self):
-        #db.configure_db({'sql_connection': 'sqlite:///:memory:'})
         cdb.initialize()
         cdb.create_vlanids()
-        LinuxBridgePlugin._net_counter = 0
+        LOG.debug("Linux Bridge Plugin initialization done successfully")
 
     def _get_vlan_for_tenant(self, tenant_id, net_name, **kwargs):
         """Get an available VLAN ID"""
