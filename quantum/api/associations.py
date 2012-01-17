@@ -64,9 +64,12 @@ class Controller(common.QuantumController):
         LOG.debug("associate_subnet() body: %s" % body)
         LOG.debug("Associating subnet: %s with Route-table: %s" % \
                   (subnet_id, body['association']['routetable_id']))
-        data = self._plugin.associate_subnet(tenant_id, subnet_id,
-                                             body['association']\
-                                             ['routetable_id'])
+
+        data = self.\
+                _plugin.associate_subnet(tenant_id,
+                                         subnet_id,
+                                         body['association']['routetable_id'])
+
         builder = associations_view.get_view_builder(request, self.version)
         result = builder.build(data)['association']
         return dict(association=result)

@@ -15,8 +15,7 @@
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 # @author: Rohit Agarwalla, Cisco Systems, Inc.
 
-import gc
-import inspect
+
 import logging
 import subprocess
 
