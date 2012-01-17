@@ -18,7 +18,8 @@
 import logging
 
 from quantum.common import exceptions as exc
-#from quantum.db import api as db
+from quantum.plugins.l3.common import constants as const
+from quantum.plugins.l3.utils import utils as util
 from quantum.plugins.l3.db import l3network_db as db
 
 LOG = logging.getLogger('quantum.plugins.L3BasePlugin')
@@ -30,13 +31,11 @@ class L3BasePlugin(object):
     """
 
     def __init__(self):
-        """
-        db.configure_db({'sql_connection': 'sqlite:///:memory:'})
-        """
         db.initialize()
         db.target_create("Private", None, description="System")
         db.target_create("Public", None, description="System")
         db.target_create("VPN", None, description="System")
+        self.l2_plugin_ref = None
 
     def _get_subnet(self, tenant_id, subnet_id):
         try:
@@ -75,7 +74,13 @@ class L3BasePlugin(object):
         """
         LOG.debug("L3BasePlugin.create_subnet() called with, " \
                   "tenant_id: %s, cidr:%s" % (tenant_id, cidr))
-        l2network_id = db.network_create(tenant_id, "subnet-" + cidr)['uuid']
+        if not self.l2_plugin_ref:
+            self.l2_plugin_ref = util.get_l2_plugin_reference()
+        """
+        TODO (Sumit): Check first if the network_id is provided in kwargs
+        """
+        l2network_id = self.l2_plugin_ref.\
+                create_network(tenant_id, "subnet-" + cidr)['net-id']
         new_subnet = db.subnet_create(tenant_id, cidr, l2network_id)
         # Return uuid for newly created subnetwork as subnet_id.
         return {'subnet_id': new_subnet['uuid']}
