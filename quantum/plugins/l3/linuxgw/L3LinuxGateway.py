@@ -101,3 +101,77 @@ class L3LinuxGatewayPlugin(L3BasePlugin):
                                                               routetable_id,
                                                               route_id)
         return route_entry
+
+    def update_route(self, tenant_id, routetable_id, route_id, **kwargs):
+        """
+        Updates the attributes of a particular route.
+        """
+        LOG.debug("L3LinuxRouter.update_route() called")
+        route = self.get_route_details(tenant_id, routetable_id, route_id)
+        source = route[const.ROUTE_SOURCE]
+        subnet_dict = self.get_subnet_details(tenant_id, source)
+        destination = route[const.ROUTE_DESTINATION]
+        target = route[const.ROUTE_TARGET]
+        if util.strcmp_ignore_case(destination, const.DESTINATION_DEFAULT)\
+           and util.strcmp_ignore_case(target, const.TARGET_PUBLIC):
+            self.iptables_manager.subnet_public_drop(subnet_dict[const.CIDR])
+
+        route = route_get(routetable_id, route_id)
+        for key in kwargs.keys():
+            route[key] = kwargs[key]
+        source = route[const.ROUTE_SOURCE]
+        subnet_dict = self.get_subnet_details(tenant_id, source)
+        destination = route[const.ROUTE_DESTINATION]
+        target = route[const.ROUTE_TARGET]
+        if util.strcmp_ignore_case(destination, const.DESTINATION_DEFAULT)\
+           and util.strcmp_ignore_case(target, const.TARGET_PUBLIC):
+            self.iptables_manager.\
+                     subnet_public_accept(subnet_dict[const.CIDR])
+
+        return  super(L3LinuxRouter, self).update_route(tenant_id,
+                                                        routetable_id,
+                                                        route_id)
+
+    def associate_subnet(self, tenant_id, subnet_id, routetable_id):
+        """
+        associates a subnet to a routetable
+        """
+        LOG.debug("L3LinuxRouter.associate_subnet() called")
+        routes = self.get_all_routes(tenant_id, routetable_id)
+        for route in routes:
+            source = route[const.ROUTE_SOURCE]
+            subnet_dict = self.get_subnet_details(tenant_id, source)
+            destination = route[const.ROUTE_DESTINATION]
+            target = route[const.ROUTE_TARGET]
+            if util.strcmp_ignore_case(destination, const.DESTINATION_DEFAULT)\
+              and util.strcmp_ignore_case(target, const.TARGET_PUBLIC):
+                self.iptables_manager.\
+                     subnet_public_accept(subnet_dict[const.CIDR])
+
+        routetable_id = super(L3LinuxRouter, self).\
+                              associate_subnet(tenant_id,
+                                               subnet_id,
+                                               routetable_id)
+        return routetable_id
+
+    def disassociate_subnet(self, tenant_id, subnet_id):
+        """
+        disassociates a subnet from a routetable
+        """
+        LOG.debug("L3LinuxRouter.disassociate_subnet() called")
+        routes = self.get_all_routes(tenant_id, routetable_id)
+        for route in routes:
+            source = route[const.ROUTE_SOURCE]
+            subnet_dict = self.get_subnet_details(tenant_id, source)
+            destination = route[const.ROUTE_DESTINATION]
+            target = route[const.ROUTE_TARGET]
+            if util.strcmp_ignore_case(destination, const.DESTINATION_DEFAULT)\
+              and util.strcmp_ignore_case(target, const.TARGET_PUBLIC):
+                self.iptables_manager.\
+                     subnet_public_drop(subnet_dict[const.CIDR])
+
+        routetable_id = super(L3LinuxRouter, self).\
+                              disassociate_subnet(tenant_id,
+                                                  subnet_id,
+                                                  routetable_id)
+        return routetable_id
