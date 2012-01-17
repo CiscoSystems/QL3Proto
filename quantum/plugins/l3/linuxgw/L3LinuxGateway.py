@@ -22,18 +22,17 @@ from quantum.db import api as db
 
 from quantum.plugins.l3.L3BasePlugin import *
 
-LOG = logging.\
-        getLogger('quantum.plugins.l3.linuxrouter.L3LinuxRouter.L3LinuxRouter')
+LOG = logging.getLogger(__name__)
 
 
-class L3LinuxRouter(L3BasePlugin):
+class L3LinuxGatewayPlugin(L3BasePlugin):
     """
     L3 Plugin that leverages Linux Bridge and
     IP Tables
     """
 
     def __init__(self):
-        super(L3LinuxRouter, self).__init__()
+        super(L3LinuxGatewayPlugin, self).__init__()
 
     def create_route(self, tenant_id, routetable_id, source, destination,
                      target, **kwargs):
