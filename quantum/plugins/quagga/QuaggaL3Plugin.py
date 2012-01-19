@@ -257,7 +257,15 @@ class QuaggaL3Plugin(object):
         route = self._get_route(routetable_id, route_id)
 
         # Delete route
-        net_details = self._convert_cidr_notation(route.destination)
+        # Check if either the destination is a subnet id
+        new_dest = route.destination
+        net_details = []
+        if re.search("[^\/]", new_dest):
+            # Grab the destination cidr
+            row = db.subnet_get(new_dest)
+            new_dest = row.cidr
+
+        net_details = self._convert_cidr_notation(new_dest)
         self.qclient.del_static_route(net_details[0], net_details[1], route.target)
 
         if route:
