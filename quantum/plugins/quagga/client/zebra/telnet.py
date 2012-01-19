@@ -2,8 +2,12 @@ import iplib
 import re
 import sys
 import telnetlib
+import logging
 
 from quantum.common import exceptions as exc
+
+LOG = logging.getLogger('quantum.plugins.QuaggaClient')
+
 
 class QuaggaClient(object):
     def __init__(self, password, en_password, host="localhost", port="2601"):
@@ -20,6 +24,7 @@ class QuaggaClient(object):
 
 
     def _login(self):
+        
         try:
             self.conn = telnetlib.Telnet(self.host, self.port)
             self.conn.read_until("Password: ")
@@ -38,7 +43,7 @@ class QuaggaClient(object):
     def add_static_route(self, destination, netmask, next_hop):
         self.conn.write("conf t\n")
         cmd = "ip route %s %s %s\n" % (destination, netmask, next_hop)
-        self.conn.write(cmd)
+        self.conn.write(cmd.encode('ascii', 'ignore'))
         self.conn.write("exit\n")
         self.conn.write("en\n")
 
@@ -47,12 +52,12 @@ class QuaggaClient(object):
         if re.search("Unknown command", outp):
             raise exc.InvalidCommandError(command=cmd)
         else:
-            return 1
+            return True
 
     def del_static_route(self, destination, netmask, next_hop):
         self.conn.write("conf t\n")
         cmd = "no ip route %s %s %s\n" % (destination, netmask, next_hop)
-        self.conn.write(cmd)
+        self.conn.write(cmd.encode('ascii', 'ignore'))
         self.conn.write("exit\n")
         self.conn.write("en\n")
 
@@ -61,7 +66,7 @@ class QuaggaClient(object):
         if re.search("Unknown command", outp):
             raise exc.InvalidCommandError(command=cmd)
         else:
-            return 1
+            return True
 
 
     def get_all_routes(self):

@@ -46,6 +46,14 @@ class Controller(common.QuantumController):
             "plurals": {"routes": "route"}},
     }
 
+    _route_upd_param_list = [{
+        'param-name': 'source',
+        'required': False},
+        {'param-name': 'destination',
+        'required': False},
+        {'param-name': 'target',
+        'required': False}]
+
     def __init__(self, plugin):
         self._resource_name = 'route'
         super(Controller, self).__init__(plugin)
@@ -95,7 +103,6 @@ class Controller(common.QuantumController):
             return self._items(request, tenant_id, routetable_id,
                                route_details=True)
 
-
     def create(self, request, tenant_id, routetable_id):
         """ Creates a new route in a routetable for a given tenant """
         try:
@@ -133,3 +140,19 @@ class Controller(common.QuantumController):
             return faults.Fault(faults.RoutetableNotFound(e))
         except exception.RouteNotFound as e:
             return faults.Fault(faults.RouteNotFound(e))
+
+    def update(self, request, tenant_id, routetable_id, id):
+        """ Updates the route with the specific route ID """
+        try:
+            request_params = \
+                self._parse_request_params(request,
+                                           self._route_upd_param_list)
+            route = self._plugin.update_route(tenant_id, routetable_id, id, 
+                                              **request_params)
+        except exception.RoutetableNotFound as e:
+            return faults.Fault(faults.RoutetableNotFound(e))
+        except exception.RouteNotFound as e:
+            return faults.Fault(faults.RouteNotFound(e))
+        builder = routes_view.get_view_builder(request)
+        result = builder.build(route, route_details=True)['route']
+        return self._build_response(request, dict(route=result), 200)

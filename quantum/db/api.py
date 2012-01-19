@@ -22,6 +22,7 @@ import logging
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, exc
+from sqlalchemy import or_
 
 from quantum.common import exceptions as q_exc
 from quantum.db import models
@@ -378,6 +379,15 @@ def subnet_get_association(subnet_id):
     return subnet['routetable_id']
 
 
+def subnet_get_routes(subnet_id):
+    session = get_session()
+    # Search for route(s) containing this subnet id
+    return session.query(models.Route).\
+           filter(or_(models.Route.destination==subnet_id, 
+                      models.Route.source==subnet_id)).\
+           all()
+
+
 def routetable_create(tenant_id, **kwargs):
     session = get_session()
     label = "label-routetable-" + tenant_id
@@ -493,7 +503,7 @@ def route_destroy(routetable_id_in, route_id):
 
 
 def route_update(routetable_id, route_id, **kwargs):
-    routetable_get(routetable_id_in)
+    routetable_get(routetable_id)
     route = route_get(routetable_id, route_id)
     session = get_session()
     for key in kwargs.keys():
