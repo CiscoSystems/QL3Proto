@@ -40,6 +40,7 @@ sys.path.append(os.path.dirname(__file__))
 
 from quantum.api.api_common import OperationalStatus
 from quantum.common.test_lib import run_tests, test_config
+from quantum.plugins.linuxbridge.LinuxBridgePlugin import LinuxBridgePlugin
 import quantum.tests.unit
 from tests.unit.test_database import L2networkDBTest
 

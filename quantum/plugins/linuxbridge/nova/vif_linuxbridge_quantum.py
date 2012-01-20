@@ -26,7 +26,7 @@ plugin
 from nova import flags
 from nova import log as logging
 from nova.network import linux_net
-from nova.virt.libvirt import netutils
+from nova.virt import netutils
 from nova import utils
 from nova.virt.vif import VIFDriver
 from nova import exception

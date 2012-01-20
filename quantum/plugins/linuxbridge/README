@@ -24,6 +24,7 @@ service with the Linux Bridge plugin.
 
    Make sure you have the following package(s) installed:
    python-configobj
+   bridge-utils (is required on every host in the deployment)
 
 # -- Nova configuration (controller node)
 
@@ -46,15 +47,20 @@ quantum/plugins/linuxbridge/nova
 
 These need to copied to the compute node in the appropriate locations.
 
-1) Copy:
+a) Copy:
    quantum/plugins/linuxbridge/nova/vif_linuxbridge_quantum.py
    to:
    nova/virt/libvirt/vif_linuxbridge_quantum.py
 
-2) Copy:
+b) Copy:
    quantum/plugins/linuxbridge/nova/linux_net_linux_bridge.py
    to:
    nova/network/quantum/linux_net_linux_bridge.py
+
+2) If you want a DHCP server to be run for the VMs to acquire IPs,
+   add the following flag to your nova.conf file:
+   
+--quantum_use_dhcp
 
 (Note: For more details on how to work with Quantum using Nova, i.e. how to create networks and such,
  please refer to the top level Quantum README which points to the relevant documentation.)
@@ -106,6 +112,7 @@ mysql> FLUSH PRIVILEGES;
 
 - Copy quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py
   and etc/quantum/plugins/linuxbridge/linuxbridge_quantum_agent.ini
-  to the compute node and run:
+  to the compute node and run the following as root:
+
 $ python linuxbridge_quantum_agent.py linuxbridge_quantum_agent.ini
   (Use --verbose option to see the logs)

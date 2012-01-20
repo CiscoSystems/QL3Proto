@@ -17,16 +17,15 @@
 
 import uuid
 
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, Boolean
 from sqlalchemy.orm import relation, object_mapper
 
-from quantum.plugins.linuxbridge.db.models import BASE
-from quantum.plugins.linuxbridge.db import models
+from quantum.db.models import BASE
+from quantum.db import models
 
 
 class L2NetworkBase(object):
     """Base class for L2Network Models."""
-    __table_args__ = {'mysql_engine': 'InnoDB'}
 
     def __setitem__(self, key, value):
         """Internal Dict set method"""
@@ -87,9 +86,7 @@ class VlanBinding(BASE, L2NetworkBase):
 
     vlan_id = Column(Integer, primary_key=True)
     vlan_name = Column(String(255))
-    network_id = Column(String(255), ForeignKey("networks.uuid"),
-                        nullable=False)
-    network = relation(models.Network, uselist=False)
+    network_id = Column(String(255), nullable=False)
 
     def __init__(self, vlan_id, vlan_name, network_id):
         self.vlan_id = vlan_id

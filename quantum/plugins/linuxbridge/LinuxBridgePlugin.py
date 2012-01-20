@@ -21,17 +21,18 @@ import logging
 
 from quantum.api.api_common import OperationalStatus
 from quantum.common import exceptions as exc
+from quantum.db import api as db
 from quantum.plugins.linuxbridge import plugin_configuration as conf
 from quantum.plugins.linuxbridge.common import constants as const
 from quantum.plugins.linuxbridge.common import utils as cutil
-from quantum.plugins.linuxbridge.db import api as db
 from quantum.plugins.linuxbridge.db import l2network_db as cdb
+from quantum.quantum_plugin_base import QuantumPluginBase
 
 
 LOG = logging.getLogger(__name__)
 
 
-class LinuxBridgePlugin(object):
+class LinuxBridgePlugin(QuantumPluginBase):
     """
     LinuxBridgePlugin provides support for Quantum abstractions
     using LinuxBridge. A new VLAN is created for each network.
@@ -39,7 +40,7 @@ class LinuxBridgePlugin(object):
     on each host.
     """
 
-    def __init__(self):
+    def __init__(self, configfile=None):
         cdb.initialize()
         cdb.create_vlanids()
         LOG.debug("Linux Bridge Plugin initialization done successfully")
@@ -152,7 +153,7 @@ class LinuxBridgePlugin(object):
         network = db.network_update(net_id, tenant_id, **kwargs)
         net_dict = cutil.make_net_dict(network[const.UUID],
                                        network[const.NETWORKNAME],
-                                       [], net[const.OPSTATUS])
+                                       [], network[const.OPSTATUS])
         return net_dict
 
     def get_all_ports(self, tenant_id, net_id):

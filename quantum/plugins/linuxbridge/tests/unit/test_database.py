@@ -26,7 +26,7 @@ import unittest
 
 from common import constants as const
 
-import db.api as db
+import quantum.db.api as db
 import db.l2network_db as l2network_db
 
 

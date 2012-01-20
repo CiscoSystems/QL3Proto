@@ -23,7 +23,7 @@ from quantum.plugins.linuxbridge.common import exceptions as c_exc
 from quantum.plugins.linuxbridge.db import l2network_models
 
 import logging as LOG
-import quantum.plugins.linuxbridge.db.api as db
+import quantum.db.api as db
 
 
 def initialize():

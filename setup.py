@@ -44,6 +44,7 @@ config_path = 'etc/quantum/'
 init_path = 'etc/init.d'
 ovs_plugin_config_path = 'etc/quantum/plugins/openvswitch'
 cisco_plugin_config_path = 'etc/quantum/plugins/cisco'
+linuxbridge_plugin_config_path = 'etc/quantum/plugins/linuxbridge'
 
 print "config_path: %s" % config_path
 DataFiles = [
@@ -59,6 +60,9 @@ DataFiles = [
          'etc/quantum/plugins/cisco/ucs.ini',
          'etc/quantum/plugins/cisco/cisco_plugins.ini',
          'etc/quantum/plugins/cisco/db_conn.ini']),
+    (linuxbridge_plugin_config_path,
+        ['etc/quantum/plugins/linuxbridge/linuxbridge_plugin.ini',
+         'etc/quantum/plugins/linuxbridge/linuxbridge_quantum_agent.ini']),
 ]
 
 setup(
