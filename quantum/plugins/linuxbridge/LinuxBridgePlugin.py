@@ -178,7 +178,7 @@ class LinuxBridgePlugin(QuantumPluginBase):
         """
         LOG.debug("LinuxBridgePlugin.get_port_details() called")
         network = db.network_get(net_id)
-        port = db.port_get(net_id, port_id)
+        port = db.port_get(port_id, net_id)
         new_port_dict = cutil.make_port_dict(port)
         return new_port_dict
 
@@ -214,10 +214,10 @@ class LinuxBridgePlugin(QuantumPluginBase):
         """
         LOG.debug("LinuxBridgePlugin.delete_port() called")
         network = db.network_get(net_id)
-        port = db.port_get(net_id, port_id)
+        port = db.port_get(port_id, net_id)
         attachment_id = port[const.INTERFACEID]
         if not attachment_id:
-            db.port_destroy(net_id, port_id)
+            db.port_destroy(port_id, net_id)
             new_port_dict = cutil.make_port_dict(port)
             return new_port_dict
         else:
@@ -231,12 +231,12 @@ class LinuxBridgePlugin(QuantumPluginBase):
         """
         LOG.debug("LinuxBridgePlugin.plug_interface() called")
         network = db.network_get(net_id)
-        port = db.port_get(net_id, port_id)
+        port = db.port_get(port_id, net_id)
         attachment_id = port[const.INTERFACEID]
         if attachment_id:
             raise exc.PortInUse(port_id=port_id, net_id=net_id,
                                 att_id=attachment_id)
-        db.port_set_attachment(net_id, port_id, remote_interface_id)
+        db.port_set_attachment(port_id, net_id, remote_interface_id)
 
     def unplug_interface(self, tenant_id, net_id, port_id):
         """
@@ -245,10 +245,10 @@ class LinuxBridgePlugin(QuantumPluginBase):
         """
         LOG.debug("LinuxBridgePlugin.unplug_interface() called")
         network = db.network_get(net_id)
-        port = db.port_get(net_id, port_id)
+        port = db.port_get(port_id, net_id)
         attachment_id = port[const.INTERFACEID]
         if attachment_id == None:
             raise exc.InvalidDetach(port_id=port_id, net_id=net_id,
                                     att_id=remote_interface_id)
-        db.port_unset_attachment(net_id, port_id)
+        db.port_unset_attachment(port_id, net_id)
         db.port_update(port_id, net_id, op_status=OperationalStatus.DOWN)
