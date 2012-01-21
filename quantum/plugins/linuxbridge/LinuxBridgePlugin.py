@@ -42,7 +42,6 @@ class LinuxBridgePlugin(QuantumPluginBase):
 
     def __init__(self, configfile=None):
         cdb.initialize()
-        cdb.create_vlanids()
         LOG.debug("Linux Bridge Plugin initialization done successfully")
 
     def _get_vlan_for_tenant(self, tenant_id, net_name, **kwargs):
@@ -88,7 +87,7 @@ class LinuxBridgePlugin(QuantumPluginBase):
         """
         LOG.debug("LinuxBridgePlugin.get_network_details() called")
         network = db.network_get(net_id)
-        ports_list = network[const.NETWORKPORTS]
+        ports_list = db.port_list(net_id)
         ports_on_net = []
         for port in ports_list:
             new_port = cutil.make_port_dict(port)
@@ -127,8 +126,8 @@ class LinuxBridgePlugin(QuantumPluginBase):
         LOG.debug("LinuxBridgePlugin.delete_network() called")
         net = db.network_get(net_id)
         if net:
-            if len(net[const.NETWORKPORTS]) > 0:
-                ports_on_net = db.port_list(net_id)
+            ports_on_net = db.port_list(net_id)
+            if len(ports_on_net) > 0:
                 for port in ports_on_net:
                     if port[const.INTERFACEID]:
                         raise exc.NetworkInUse(net_id=net_id)
@@ -138,8 +137,11 @@ class LinuxBridgePlugin(QuantumPluginBase):
             net_dict = cutil.make_net_dict(net[const.UUID],
                                            net[const.NETWORKNAME],
                                            [], net[const.OPSTATUS])
-            self._release_vlan_for_tenant(tenant_id, net_id)
-            cdb.remove_vlan_binding(net_id)
+            try:
+                self._release_vlan_for_tenant(tenant_id, net_id)
+                cdb.remove_vlan_binding(net_id)
+            except Exception as excp:
+                LOG.warning("Excpetion: %s" % excp)
             db.network_destroy(net_id)
             return net_dict
         # Network not found
@@ -163,7 +165,7 @@ class LinuxBridgePlugin(QuantumPluginBase):
         """
         LOG.debug("LinuxBridgePlugin.get_all_ports() called")
         network = db.network_get(net_id)
-        ports_list = network[const.NETWORKPORTS]
+        ports_list = db.port_list(net_id)
         ports_on_net = []
         for port in ports_list:
             new_port = cutil.make_port_dict(port)

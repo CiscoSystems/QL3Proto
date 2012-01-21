@@ -101,18 +101,18 @@ mysql> FLUSH PRIVILEGES;
 # -- Plugin configuration
 
 - Edit the configuration file:
-  etc/quantum/plugins/linuxbridge/linuxbridge_plugin.ini
+  etc/quantum/plugins/linuxbridge/linuxbridge_conf.ini
   Make sure it matches your mysql configuration.  This file must be updated
   with the addresses and credentials to access the database. 
 
 # -- Agent configuration
 
 - Edit the configuration file:
-  etc/quantum/plugins/linuxbridge/linuxbridge_quantum_agent.ini
+  etc/quantum/plugins/linuxbridge/linuxbridge_conf.ini
 
 - Copy quantum/plugins/linuxbridge/agent/linuxbridge_quantum_agent.py
-  and etc/quantum/plugins/linuxbridge/linuxbridge_quantum_agent.ini
+  and etc/quantum/plugins/linuxbridge/linuxbridge_conf.ini
   to the compute node and run the following as root:
 
-$ python linuxbridge_quantum_agent.py linuxbridge_quantum_agent.ini
+$ python linuxbridge_quantum_agent.py linuxbridge_conf.ini
   (Use --verbose option to see the logs)

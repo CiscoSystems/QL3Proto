@@ -24,7 +24,7 @@ from quantum.common.config import find_config_file
 from quantum.plugins.linuxbridge.common import configparser as confp
 
 CONF_FILE = find_config_file({'plugin': 'linuxbridge'}, None,
-                             "linuxbridge_plugin.ini")
+                             "linuxbridge_conf.ini")
 CONF_PARSER_OBJ = confp.ConfigParser(CONF_FILE)
 
 """
@@ -35,14 +35,11 @@ VLAN_NAME_PREFIX = SECTION_CONF['vlan_name_prefix']
 VLAN_START = SECTION_CONF['vlan_start']
 VLAN_END = SECTION_CONF['vlan_end']
 
-SECTION_CONF = CONF_PARSER_OBJ['PORTS']
-MAX_PORTS = SECTION_CONF['max_ports']
-
-SECTION_CONF = CONF_PARSER_OBJ['NETWORKS']
-MAX_NETWORKS = SECTION_CONF['max_networks']
-
 SECTION_CONF = CONF_PARSER_OBJ['DATABASE']
-DB_NAME = SECTION_CONF['name']
-DB_USER = SECTION_CONF['user']
-DB_PASS = SECTION_CONF['pass']
-DB_HOST = SECTION_CONF['host']
+DB_CONNECTION = SECTION_CONF['connection']
+if DB_CONNECTION != 'sqlite':
+    DB_NAME = SECTION_CONF['name']
+    DB_USER = SECTION_CONF['user']
+    DB_PASS = SECTION_CONF['pass']
+    DB_HOST = SECTION_CONF['host']
+    DB_PORT = SECTION_CONF['port']

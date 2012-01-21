@@ -23,16 +23,17 @@
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
 #
 
+from optparse import OptionParser
+from subprocess import *
+
 import ConfigParser
 import logging as LOG
 import MySQLdb
 import os
+import signal
+import sqlite3
 import sys
 import time
-import signal
-
-from optparse import OptionParser
-from subprocess import *
 
 
 BRIDGE_NAME_PREFIX = "brq-"
@@ -48,6 +49,7 @@ VLAN_BINDINGS = "vlan_bindings"
 PORT_BINDINGS = "port_bindings"
 OP_STATUS_UP = "UP"
 OP_STATUS_DOWN = "DOWN"
+DB_CONNECTION = None
 
 
 class LinuxBridge:
@@ -347,7 +349,10 @@ class LinuxBridgeQuantumAgent:
 
     def manage_networks_on_host(self, conn, old_vlan_bindings,
                                 old_port_bindings):
-        cursor = MySQLdb.cursors.DictCursor(conn)
+        if DB_CONNECTION != 'sqlite':
+            cursor = MySQLdb.cursors.DictCursor(conn)
+        else:
+            cursor = conn.cursor()
         cursor.execute("SELECT * FROM vlan_bindings")
         rows = cursor.fetchall()
         cursor.close()
@@ -425,6 +430,7 @@ if __name__ == "__main__":
 
     config_file = args[0]
     config = ConfigParser.ConfigParser()
+    conn = None
     try:
         fh = open(config_file)
         fh.close()
@@ -432,20 +438,27 @@ if __name__ == "__main__":
         br_name_prefix = BRIDGE_NAME_PREFIX
         physical_interface = config.get("LINUX_BRIDGE", "physical_interface")
         polling_interval = config.get("AGENT", "polling_interval")
-        db_name = config.get("DATABASE", "name")
-        db_user = config.get("DATABASE", "user")
-        db_pass = config.get("DATABASE", "pass")
-        db_host = config.get("DATABASE", "host")
+        'Establish database connection and load models'
+        DB_CONNECTION = config.get("DATABASE", "connection")
+        if DB_CONNECTION == 'sqlite':
+            LOG.info("Connecting to sqlite DB")
+            conn = sqlite3.connect(":memory:")
+            conn.row_factory = sqlite3.Row
+        else:
+            db_name = config.get("DATABASE", "name")
+            db_user = config.get("DATABASE", "user")
+            db_pass = config.get("DATABASE", "pass")
+            db_host = config.get("DATABASE", "host")
+            db_port = int(config.get("DATABASE", "port"))
+            LOG.info("Connecting to database %s on %s" % (db_name, db_host))
+            conn = MySQLdb.connect(host=db_host, user=db_user, port=db_port,
+                                   passwd=db_pass, db=db_name)
     except Exception, e:
         LOG.error("Unable to parse config file \"%s\": \nException%s"
                   % (config_file, str(e)))
         sys.exit(1)
 
-    conn = None
     try:
-        LOG.info("Connecting to database \"%s\" on %s" % (db_name, db_host))
-        conn = MySQLdb.connect(host=db_host, user=db_user,
-          passwd=db_pass, db=db_name)
         plugin = LinuxBridgeQuantumAgent(br_name_prefix, physical_interface,
                                          polling_interval)
         LOG.info("Agent initialized successfully, now running...")

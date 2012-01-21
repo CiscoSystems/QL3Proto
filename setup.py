@@ -61,8 +61,7 @@ DataFiles = [
          'etc/quantum/plugins/cisco/cisco_plugins.ini',
          'etc/quantum/plugins/cisco/db_conn.ini']),
     (linuxbridge_plugin_config_path,
-        ['etc/quantum/plugins/linuxbridge/linuxbridge_plugin.ini',
-         'etc/quantum/plugins/linuxbridge/linuxbridge_quantum_agent.ini']),
+        ['etc/quantum/plugins/linuxbridge/linuxbridge_conf.ini']),
 ]
 
 setup(

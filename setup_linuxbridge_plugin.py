@@ -46,8 +46,7 @@ if [x for x in relative_locations if x in sys.argv]:
 
 DataFiles = [
     (config_path,
-    ['etc/quantum/plugins/linuxbridge/linuxbridge_plugin.ini',
-     'linuxbridge_quantum_etc/quantum/plugins/linuxbridge/agent.ini'])
+    ['etc/quantum/plugins/linuxbridge/linuxbridge_conf.ini'])
 ]
 
 setup(

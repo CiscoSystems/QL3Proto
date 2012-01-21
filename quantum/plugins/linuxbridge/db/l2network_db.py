@@ -28,9 +28,17 @@ import quantum.db.api as db
 
 def initialize():
     'Establish database connection and load models'
-    options = {"sql_connection": "mysql://%s:%s@%s/%s" % (conf.DB_USER,
-    conf.DB_PASS, conf.DB_HOST, conf.DB_NAME)}
+    if conf.DB_CONNECTION == 'sqlite':
+        options = {"sql_connection": "sqlite://"}
+    else:
+        options = {"sql_connection": "mysql://%s:%s@%s:%s/%s" % (conf.DB_USER,
+                                                                 conf.DB_PASS,
+                                                                 conf.DB_HOST,
+                                                                 conf.DB_PORT,
+                                                                 conf.DB_NAME)}
+
     db.configure_db(options)
+    create_vlanids()
 
 
 def create_vlanids():
@@ -116,10 +124,16 @@ def reserve_vlanid():
     session = db.get_session()
     try:
         rvlan = session.query(l2network_models.VlanID).\
+          first()
+        if not rvlan:
+            create_vlanids()
+
+        rvlan = session.query(l2network_models.VlanID).\
          filter_by(vlan_used=False).\
           first()
         if not rvlan:
             raise exc.NoResultFound
+
         rvlanid = session.query(l2network_models.VlanID).\
          filter_by(vlan_id=rvlan["vlan_id"]).\
           one()
