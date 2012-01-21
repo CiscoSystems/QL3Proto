@@ -22,8 +22,11 @@ from quantum.plugins.linuxbridge import plugin_configuration as conf
 from quantum.plugins.linuxbridge.common import exceptions as c_exc
 from quantum.plugins.linuxbridge.db import l2network_models
 
-import logging as LOG
+import logging
 import quantum.db.api as db
+
+
+LOG = logging.getLogger(__name__)
 
 
 def initialize():

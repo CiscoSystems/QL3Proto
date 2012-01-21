@@ -5,13 +5,13 @@ except ImportError:
     use_setuptools()
     from setuptools import setup, find_packages
 
-import version
+from quantum import version
 
 import sys
 
 Name = 'quantum-linuxbridge-plugin'
 ProjecUrl = ""
-Version = version.get_git_version()
+Version = version.version_string()
 License = 'Apache License 2.0'
 Author = 'Cisco Systems Inc.'
 AuthorEmail = 'snaiksat@cisco.com'
@@ -25,6 +25,7 @@ requires = [
     'quantum-server',
     'python-configobj>=4.7.2',
     'bridge-utils>=1.4',
+    'sqlite3>=3.7.2',
 ]
 
 EagerResources = [
