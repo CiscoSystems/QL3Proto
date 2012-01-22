@@ -25,6 +25,7 @@ service with the Linux Bridge plugin.
    Make sure you have the following package(s) installed:
    python-configobj
    bridge-utils (is required on every host in the deployment)
+   sqlite3 (to run the tests)
 
 # -- Nova configuration (controller node)
 
@@ -104,6 +105,15 @@ mysql> FLUSH PRIVILEGES;
   etc/quantum/plugins/linuxbridge/linuxbridge_conf.ini
   Make sure it matches your mysql configuration.  This file must be updated
   with the addresses and credentials to access the database. 
+
+  Note: When running the tests, set the connection type to sqlite, and when
+  actually running the server set it to mysql. At any given time, only one
+  of these should be active in the conf file (you can comment out the other).
+
+- Remember to change the interface configuration to indicate the correct
+  ethernet interface on that particular host which is being used to participate
+  in the Quantum networks. This configuration has to be applied on each host
+  on which the agent runs.
 
 # -- Agent configuration
 
