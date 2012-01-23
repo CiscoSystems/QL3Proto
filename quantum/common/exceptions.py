@@ -138,6 +138,11 @@ class SubnetAlreadyAssociated(QuantumException):
                 "again.")
 
 
+class SubnetRouteError(QuantumException):
+    message = _("Subnet %(subnet_id)s has routes associated with it." \
+                "Remove these routes to dissassociate/delete this subnet.")
+
+
 class InvalidCIDR(QuantumException):
     message = _("CIDR %(cidr)s is invalid")
 
@@ -148,6 +153,11 @@ class DuplicateCIDR(QuantumException):
 
 class RoutetableNotFound(NotFound):
     message = _("Routetable %(routetable_id)s could not be found")
+
+
+class RoutetableRouteError(QuantumException):
+    message = _("Routetable %(routetable_id)s has routes associated with it." \
+                "Remove these routes to dissassociate/delete this routetable.")
 
 
 class RouteNotFound(NotFound):

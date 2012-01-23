@@ -389,12 +389,13 @@ def update_route(client, *args):
     data['routetable_id'] = routetable_id
     data['route']['id'] = route_id
     try:
-        client.update_route(routetable_id, route_id, data)
+        res = client.update_route(routetable_id, route_id, data)
         LOG.debug("Operation 'update_route' executed.")
         # Response has no body. Use data for populating output
-        output = prepare_output("update_route", tenant_id,
-                                dict(routetable_id=routetable_id,
-                                     id=route_id))
+        output = prepare_output("update_route", tenant_id, 
+                                dict(id=route_id,
+                                     routetable_id=routetable_id,
+                                     tenant_id=tenant_id))
         print output
     except Exception as ex:
         _handle_exception(ex)

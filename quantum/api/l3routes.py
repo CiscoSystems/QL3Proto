@@ -120,6 +120,23 @@ class Controller(common.QuantumController):
         """ Deletes the route with the specific route ID """
         self._plugin.delete_route(tenant_id, routetable_id, id)
 
+    @common.APIFaultWrapper([exception.RoutetableNotFound,
+                             exception.RouteNotFound])
+    def update(self, request, tenant_id, routetable_id, id):
+        """ Updates the route with the specific route ID """
+        try:
+            request_params = \
+                self._parse_request_params(request,
+                                           self._route_upd_param_list)
+            route = self._plugin.update_route(tenant_id, routetable_id, id,
+                                              **request_params)
+        except exception.RoutetableNotFound as e:
+            return faults.Fault(faults.RoutetableNotFound(e))
+        except exception.RouteNotFound as e:
+            return faults.Fault(faults.RouteNotFound(e))
+        builder = routes_view.get_view_builder(request)
+        result = builder.build(route, route_details=True)['route']
+        return self._build_response(request, dict(route=result), 200)
 
 class ControllerV11(Controller):
     """Route resources controller for Quantum v1.1 API
