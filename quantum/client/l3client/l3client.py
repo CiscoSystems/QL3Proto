@@ -372,15 +372,6 @@ class Client(object):
                                                "routetable_id": routetable})
 
     @ApiCall
-    def update_route(self, routetable, route, body=None):
-        """
-        Updates a route
-        """
-        return self.do_request("PUT", self.route_path % (routetable, route),
-                               body=body, exception_args={"route_id": route,
-                                               "routetable_id": routetable})
-
-    @ApiCall
     def list_available_targets(self, routetable):
         """
         Fetches a list of all available targets for a tenant

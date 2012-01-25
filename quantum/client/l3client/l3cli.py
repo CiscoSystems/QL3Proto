@@ -80,9 +80,6 @@ commands = {
   "delete_route": {
     "func": cli_lib.delete_route,
     "args": ["tenant-id", "routetable_id", "route_id"]},
-  "update_route": {
-    "func": cli_lib.update_route,
-    "args": ["tenant-id", "routetable_id", "route_id", "params"]},
   "show_route": {
     "func": cli_lib.show_route,
     "args": ["tenant-id", "routetable_id", "route_id"]},

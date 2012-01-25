@@ -235,7 +235,8 @@ def routetable_update(routetable_id, tenant_id, **kwargs):
     session = get_session()
     routetable = routetable_get(routetable_id)
     for key in kwargs.keys():
-        routetable[key] = kwargs[key]
+        if kwargs[key]:
+            routetable[key] = kwargs[key]
     session.merge(routetable)
     session.flush()
     return routetable
@@ -310,17 +311,6 @@ def route_destroy(routetable_id_in, route_id):
     except exc.NoResultFound:
         raise q_exc.RouteNotFound(routetable_id=routetable_id_in,
                                   route_id=route_id)
-
-
-def route_update(routetable_id, route_id, **kwargs):
-    routetable_get(routetable_id)
-    route = route_get(routetable_id, route_id)
-    session = get_session()
-    for key in kwargs.keys():
-        route[key] = kwargs[key]
-    session.merge(route)
-    session.flush()
-    return route
 
 
 def target_create(tag, tenant_id=None, **kwargs):
