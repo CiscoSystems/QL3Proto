@@ -193,8 +193,8 @@ def subnet_get_routes(subnet_id):
     session = get_session()
     # Search for route(s) containing this subnet id
     return session.query(models.Route).\
-                         filter(or_(models.Route.destination==subnet_id,
-                                    models.Route.source==subnet_id)).\
+                         filter(or_(models.Route.destination == subnet_id,
+                                    models.Route.source == subnet_id)).\
                          all()
 
 

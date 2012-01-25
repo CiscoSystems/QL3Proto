@@ -116,4 +116,3 @@ class L3CLIAPITest(unittest.TestCase):
         self.assertEqual(data['path'], path)
 
         return data
-

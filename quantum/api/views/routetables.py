@@ -53,4 +53,5 @@ class ViewBuilder11(object):
         """Return a detailed model of a routetable."""
         return dict(routetable=dict(id=routetable_data['routetable_id'],
                                 label=routetable_data.get('label'),
-                                description=routetable_data.get('description')))
+                                description=routetable_data.\
+                                    get('description')))
