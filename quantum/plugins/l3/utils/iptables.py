@@ -87,10 +87,10 @@ class IptablesTable(object):
         else:
             command_string = ["iptables", "-I", chain, pos]
         command_string = util.extend_string_list(command_string, rule)
+        rule = ''.join(rule.split())
         if IptablesRule(chain, rule) in self.rules:
             return
         util.execute_command_string(command_string)
-        rule = ''.join(rule.split())
         self.rules.append(IptablesRule(chain, rule))
 
     def add_rule_restore(self, chain, rule):
@@ -119,24 +119,25 @@ class IptablesManager(object):
     """
 
     def __init__(self):
-        self.ipv4 = {'filter': IptablesTable()}
+        self.ipv4 = {'filter': IptablesTable(),
+                     'nat': IptablesTable()}
 
-    def subnet_public_accept(self, subnet):
+    def subnet_public_accept(self, subnet, public_interface):
         """Allow subnet to internet traffic
         """
-        "TODO(Rohit): Allow passing public interface as parameter"
         self.ipv4['filter'].add_rule("l3-linux-FORWARD", \
-                                     "-s %(subnet)s -o eth1" \
-                                     " -j ACCEPT" % {'subnet': subnet},
+                                     "-s %(subnet)s -o %(p_int)s" \
+                                     " -j ACCEPT" % {'subnet': subnet,\
+                                     'p_int': public_interface},\
                                      True, "1")
 
-    def subnet_public_drop(self, subnet):
+    def subnet_public_drop(self, subnet, public_interface):
         """Allow subnet to internet traffic
         """
-        "TODO(Rohit): Allow passing public interface as parameter"
         self.ipv4['filter'].remove_rule("l3-linux-FORWARD", \
-                                     "-s %(subnet)s -o eth1" \
-                                     " -j ACCEPT" % {'subnet': subnet})
+                                     "-s %(subnet)s -o %(p_int)s" \
+                                     " -j ACCEPT" % {'subnet': subnet,\
+                                     'p_int': public_interface})
 
     def subnet_drop_all(self, subnet):
         """Deny subnet traffic
@@ -182,6 +183,54 @@ class IptablesManager(object):
                                      "-m state --state RELATED,ESTABLISHED "
                                      "-j ACCEPT" % {'source': source_subnet})
 
+    def add_snat_rule(self, cidr, public_ip):
+        """SNAT rule for outgoing public traffic"""
+        self.ipv4['nat'].add_chain("nova-network-snat")
+        self.ipv4['nat'].add_rule("nova-network-snat", \
+                                   "-s %s -j SNAT --to-source %s" % \
+                                   (cidr, public_ip))
+
+    def remove_snat_rule(self, cidr, public_ip):
+        """SNAT rule for outgoing public traffic"""
+        self.ipv4['nat'].remove_rule("nova-network-snat", \
+                                   "-s %s -j SNAT --to-source %s" % \
+                                   (cidr, public_ip))
+
+    def add_init_gateway(self, bridge_interface, gateway):
+        """Allow/Deny incoming and outgoing traffic on bridge interface
+           based on gateway"""
+        self.ipv4['filter'].add_chain("nova-network-FORWARD")
+        if gateway:
+            self.ipv4['filter'].add_rule("nova-network-FORWARD",
+                                     "--in-interface %s -j ACCEPT" % \
+                                     bridge_interface)
+            self.ipv4['filter'].add_rule("nova-network-FORWARD",
+                                     "--out-interface %s -j ACCEPT" % \
+                                     bridge_interface)
+        else:
+            self.ipv4['filter'].add_rule("nova-network-FORWARD",
+                                     "--in-interface %s -j DROP" % \
+                                     bridge_interface)
+            self.ipv4['filter'].add_rule("nova-network-FORWARD",
+                                     "--out-interface %s -j DROP" % \
+                                     bridge_interface)
+
+    def remove_init_gateway(self, bridge_interface, gateway):
+        if gateway:
+            self.ipv4['filter'].remove_rule("nova-network-FORWARD",
+                                     "--in-interface %s -j ACCEPT" % \
+                                     bridge_interface)
+            self.ipv4['filter'].remove_rule("nova-network-FORWARD",
+                                     "--out-interface %s -j ACCEPT" % \
+                                     bridge_interface)
+        else:
+            self.ipv4['filter'].remove_rule("nova-network-FORWARD",
+                                     "--in-interface %s -j DROP" % \
+                                     bridge_interface)
+            self.ipv4['filter'].remove_rule("nova-network-FORWARD",
+                                     "--out-interface %s -j DROP" % \
+                                     bridge_interface)
+
     def clear_all(self, chain_name):
         """Remove chain and all rules in that chain
         """
@@ -222,6 +271,7 @@ class IptablesManager(object):
             elif rule[1] == "N":
                 self.ipv4['filter'].add_chain_restore("l3-linux-FORWARD")
         self.ipv4['filter'].print_rules_chain()
+
 
 if __name__ == '__main__':
     iptables_manager = IptablesManager()

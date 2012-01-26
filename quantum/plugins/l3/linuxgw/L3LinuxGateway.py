@@ -27,6 +27,9 @@ from quantum.plugins.l3.utils import iptables
 
 LOG = logging.getLogger(__name__)
 
+PUBLIC_INTERFACE = "eth1"
+TENANT_ID = "t1"
+
 
 class L3LinuxGatewayPlugin(L3BasePlugin):
     """
@@ -36,20 +39,56 @@ class L3LinuxGatewayPlugin(L3BasePlugin):
 
     def __init__(self):
         super(L3LinuxGatewayPlugin, self).__init__()
+        self.tenant_id = TENANT_ID
+        self.public_interface = PUBLIC_INTERFACE
         self.iptables_manager = iptables.IptablesManager()
-        #self.iptables_manager.initialize()
-        self.iptables_manager.restore()
+        self.restore_iptables()
+
+    def restore_iptables(self):
+        """
+        Restores the state of the iptables
+        """
+        LOG.debug("L3LinuxGatewayPlugin.restore_iptables() called")
+        self.iptables_manager.initialize()
+        """TODO(Rohit): Use enhanced DB methods without tenant_id"""
+        subnets = super(L3LinuxGatewayPlugin, self).\
+                                  get_all_subnets(self.tenant_id)
+        for subnet in subnets:
+            subnet_id = subnet['subnet_id']
+            subnet_cidr = subnet['cidr']
+            self.create_subnet(self.tenant_id, subnet_cidr,\
+                               subnet_id=subnet_id)
+
+        routetables = super(L3LinuxGatewayPlugin, self).\
+                                      get_all_routetables(self.tenant_id)
+        for routetable in routetables:
+            routetable_id = routetable['routetable_id']
+            routes = super(L3LinuxGatewayPlugin, self).\
+                                 get_all_routes(self.tenant_id, routetable_id)
+            for route in routes:
+                route_id = route['route_id']
+                route_source = route['source']
+                route_destination = route['destination']
+                route_target = route['target']
+                self.create_route(self.tenant_id, routetable_id,
+                                  route_source, route_destination,
+                                  route_target, route_id=route_id)
 
     def create_subnet(self, tenant_id, cidr, **kwargs):
         """
         Creates a new subnet, and assigns it a symbolic name.
         """
         LOG.debug("L3LinuxGatewayPlugin.create_subnet() called")
+        subnet_id = None
         self.iptables_manager.subnet_drop_all(cidr)
-        new_subnet = super(L3LinuxGatewayPlugin, self).create_subnet(tenant_id,
+        if "subnet_id" in kwargs:
+            subnet_id = kwargs['subnet_id']
+        if subnet_id is None:
+            new_subnet = super(L3LinuxGatewayPlugin, self).\
+                                                create_subnet(tenant_id,
                                                               cidr,
                                                               **kwargs)
-        return new_subnet
+            return new_subnet
 
     def delete_subnet(self, tenant_id, subnet_id):
         """
@@ -78,22 +117,26 @@ class L3LinuxGatewayPlugin(L3BasePlugin):
         if util.strcmp_ignore_case(destination, const.DESTINATION_DEFAULT)\
            and util.strcmp_ignore_case(target, const.TARGET_PUBLIC):
             self.iptables_manager.\
-                    subnet_public_accept(source_subnet_dict[const.CIDR])
+                    subnet_public_accept(source_subnet_dict[const.CIDR],
+                                         self.public_interface)
         if util.strcmp_ignore_case(target, const.TARGET_PRIVATE):
             destination_subnet_dict = \
                     self.get_subnet_details(tenant_id, destination)
             self.iptables_manager.\
                  inter_subnet_accept(source_subnet_dict[const.CIDR],
                                      destination_subnet_dict[const.CIDR])
-
-        new_route_entry = \
+        route_id = None
+        if "route_id" in kwargs:
+            route_id = kwargs["route_id"]
+        if route_id is None:
+            new_route_entry = \
                 super(L3LinuxGatewayPlugin, self).create_route(tenant_id,
                                                                routetable_id,
                                                                source,
                                                                destination,
                                                                target,
                                                                **kwargs)
-        return new_route_entry
+            return new_route_entry
 
     def delete_route(self, tenant_id, routetable_id, route_id):
         """
@@ -108,7 +151,8 @@ class L3LinuxGatewayPlugin(L3BasePlugin):
         if util.strcmp_ignore_case(destination, const.DESTINATION_DEFAULT)\
            and util.strcmp_ignore_case(target, const.TARGET_PUBLIC):
             self.iptables_manager.\
-                    subnet_public_drop(source_subnet_dict[const.CIDR])
+                    subnet_public_drop(source_subnet_dict[const.CIDR],
+                                       self.public_interface)
         if util.strcmp_ignore_case(target, const.TARGET_PRIVATE):
             destination_subnet_dict = \
                     self.get_subnet_details(tenant_id, destination)
@@ -120,37 +164,6 @@ class L3LinuxGatewayPlugin(L3BasePlugin):
                                                               routetable_id,
                                                               route_id)
         return route_entry
-
-    def update_route(self, tenant_id, routetable_id, route_id, **kwargs):
-        """
-        Updates the attributes of a particular route.
-        """
-        LOG.debug("L3LinuxRouter.update_route() called")
-        """
-        route = self.get_route_details(tenant_id, routetable_id, route_id)
-        source = route[const.ROUTE_SOURCE]
-        subnet_dict = self.get_subnet_details(tenant_id, source)
-        destination = route[const.ROUTE_DESTINATION]
-        target = route[const.ROUTE_TARGET]
-        if util.strcmp_ignore_case(destination, const.DESTINATION_DEFAULT)\
-           and util.strcmp_ignore_case(target, const.TARGET_PUBLIC):
-            self.iptables_manager.subnet_public_drop(subnet_dict[const.CIDR])
-
-        route = route_get(routetable_id, route_id)
-        for key in kwargs.keys():
-            route[key] = kwargs[key]
-        source = route[const.ROUTE_SOURCE]
-        subnet_dict = self.get_subnet_details(tenant_id, source)
-        destination = route[const.ROUTE_DESTINATION]
-        target = route[const.ROUTE_TARGET]
-        if util.strcmp_ignore_case(destination, const.DESTINATION_DEFAULT)\
-           and util.strcmp_ignore_case(target, const.TARGET_PUBLIC):
-            self.iptables_manager.\
-                     subnet_public_accept(subnet_dict[const.CIDR])
-        """
-        return  super(L3LinuxGatewayPlugin, self).update_route(tenant_id,
-                                                        routetable_id,
-                                                        route_id)
 
     def associate_subnet(self, tenant_id, subnet_id, routetable_id):
         """
