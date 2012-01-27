@@ -231,6 +231,13 @@ def routetable_get(routetable_id):
         raise q_exc.RoutetableNotFound(routetable_id=routetable_id)
 
 
+def routetable_get_associated_subnets(routetable_id):
+    session = get_session()
+    return session.query(models.Subnet).\
+            filter_by(routetable_id=routetable_id).\
+            all()
+
+
 def routetable_update(routetable_id, tenant_id, **kwargs):
     session = get_session()
     routetable = routetable_get(routetable_id)

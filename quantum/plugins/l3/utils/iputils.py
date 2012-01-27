@@ -1,7 +1,5 @@
-"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-#
-# Copyright 2011 Cisco Systems, Inc.  All rights reserved.
+# Copyright 2011, Cisco Systems, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -14,26 +12,36 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-#
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
-#
-"""
 
-CIDR = 'cidr'
 
-ROUTE_SOURCE = 'source'
-ROUTE_DESTINATION = 'destination'
-ROUTE_TARGET = 'target'
+import logging
+import subprocess
+from netaddr import *
 
-DESTINATION_DEFAULT = '0.0.0.0'
+from quantum.common import exceptions as exc
 
-TARGET_PUBLIC = 'PUBLIC'
 
-USERNAME = 'username'
-PASSWORD = 'password'
+LOG = logging.getLogger(__name__)
+MINIMUM_IPS = 2
 
-DELIMITERS = "[,;:\b\s]"
 
-UUID_LENGTH = 36
+def validate_cidr(cidr):
+    """
+    This method returns True if the cidr is valid
+    """
+    try:
+        return IPNetwork(cidr)
+    except:
+        raise exc.InvalidCIDR(cidr=cidr)
 
-STAR_WILD_CARD = '*'
+
+def validate_subnet_cidr(cidr):
+    """
+    This method returns True if the cidr is valid and it has more than
+    two IPs.
+    """
+    try:
+        return IPNetwork(cidr).size > MINIMUM_IPS
+    except:
+        raise exc.InvalidCIDR(cidr=cidr)

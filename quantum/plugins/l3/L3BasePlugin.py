@@ -19,8 +19,11 @@ import logging
 
 from quantum.common import exceptions as exc
 from quantum.plugins.l3.common import constants as const
-from quantum.plugins.l3.utils import utils as util
 from quantum.plugins.l3.db import l3network_db as db
+from quantum.plugins.l3.utils import l3utils as l3util
+from quantum.plugins.l3.utils import iputils as iputil
+from quantum.plugins.l3.utils import utils as util
+
 
 LOG = logging.getLogger('quantum.plugins.L3BasePlugin')
 
@@ -74,6 +77,8 @@ class L3BasePlugin(object):
         """
         LOG.debug("L3BasePlugin.create_subnet() called with, " \
                   "tenant_id: %s, cidr:%s" % (tenant_id, cidr))
+        if not iputil.validate_subnet_cidr(cidr):
+            raise exc.InvalidCIDR(cidr=cidr)
         if not self.l2_plugin_ref:
             self.l2_plugin_ref = util.get_l2_plugin_reference()
         """
@@ -103,6 +108,9 @@ class L3BasePlugin(object):
         Updates the attributes of a particular subnet.
         """
         LOG.debug("L3BasePlugin.update_subnet() called")
+        if kwargs.has_key('cidr'):
+            if not iputil.validate_subnet_cidr(kwargs['cidr']):
+                raise exc.InvalidCIDR(cidr=kwargs['cidr'])
         subnet = db.subnet_update(subnet_id, tenant_id, **kwargs)
         return {'subnet_id': str(subnet.uuid),
                 'cidr': subnet.cidr,
@@ -203,6 +211,7 @@ class L3BasePlugin(object):
         LOG.debug("L3BasePlugin.create_route() called with, " \
                   "tenant_id: %s routetable_id: %s" % (tenant_id,
                                                        routetable_id))
+        l3util.validate_route_source(tenant_id, routetable_id, source)
         new_route = db.route_create(routetable_id, source, destination, target,
                                     **kwargs)
         return {'route_id': new_route['uuid'],

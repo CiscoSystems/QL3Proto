@@ -18,6 +18,7 @@
 
 import logging
 import subprocess
+import uuid
 
 from quantum.manager import QuantumManager as manager
 
@@ -55,3 +56,10 @@ def extend_string_list(org_str, ext_str):
     ext_str = ext_str.split(" ")
     org_str.extend(ext_str)
     return org_str
+
+
+def validate_uuid(uuid_str):
+    """
+    This method validates a UUID
+    """
+    return uuid.UUID(uuid_str)
