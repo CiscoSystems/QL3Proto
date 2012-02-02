@@ -99,6 +99,45 @@ def _check_duplicate_cidr(tenant_id, cidr):
         pass
 
 
+def _check_duplicate_target(tag, tenant_id):
+    """Checks whether a target with the tag
+       already exists for the tenant.
+    """
+    session = get_session()
+    try:
+        subnet = session.query(models.Target).\
+          filter_by(tenant_id=tenant_id, tag=tag).\
+          one()
+        raise q_exc.DuplicateTarget(tenant_id=tenant_id,
+                                    tag=tag)
+          
+    except exc.NoResultFound:
+        # this is the "normal" path
+        pass
+
+
+def _check_duplicate_route(routetable_id_in, source_in, destination_in,
+                           target_in):
+    """Checks whether a route with the same source, destination,
+       target already exists for the tenant.
+    """
+    session = get_session()
+    try:
+        subnet = session.query(models.Route).\
+          filter_by(routetable_id=routetable_id_in,
+                    source=source_in,
+                    destination=destination_in,
+                    target=target_in).\
+                one()
+        raise q_exc.DuplicateRoute(source=source_in,
+                                   destination=destination_in,
+                                   target=target_in)
+          
+    except exc.NoResultFound:
+        # this is the "normal" path
+        pass
+
+
 def subnet_create(tenant_id, cidr, network_id):
     session = get_session()
 
@@ -122,6 +161,16 @@ def subnet_get(subnet_id):
     try:
         return  session.query(models.Subnet).\
             filter_by(uuid=subnet_id).\
+            one()
+    except exc.NoResultFound, e:
+        raise q_exc.SubnetNotFound(subnet_id=subnet_id)
+
+
+def subnet_get_by_tenant(tenant_id, subnet_id):
+    session = get_session()
+    try:
+        return  session.query(models.Subnet).\
+            filter_by(uuid=subnet_id, tenant_id=tenant_id).\
             one()
     except exc.NoResultFound, e:
         raise q_exc.SubnetNotFound(subnet_id=subnet_id)
@@ -272,6 +321,8 @@ def routetable_destroy(routetable_id):
 def route_create(routetable_id_in, source_in, destination_in, target_in,
                  **kwargs):
     routetable_get(routetable_id_in)
+    _check_duplicate_route(routetable_id_in, source_in, destination_in,
+                           target_in)
 
     session = get_session()
     with session.begin():
@@ -321,6 +372,8 @@ def route_destroy(routetable_id_in, route_id):
 
 
 def target_create(tag, tenant_id=None, **kwargs):
+    tag = tag.lower()
+    _check_duplicate_target(tag, tenant_id)
     session = get_session()
     description = "System"
     for key in kwargs.keys():
@@ -337,6 +390,19 @@ def target_list(tenant_id):
     session = get_session()
     return session.query(models.Target).\
       all()
+
+
+def target_get(tenant_id, tag):
+    session = get_session()
+    try:
+        # TODO (Sumit): For now we don't check the tenant_id,
+        # but we will need to later
+        target = session.query(models.Target).\
+          filter_by(tag=tag).\
+          one()
+        return target
+    except exc.NoResultFound:
+        raise q_exc.TargetNotFound(target_id=None)
 
 
 def target_destroy(target_id):

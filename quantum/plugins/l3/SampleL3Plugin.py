@@ -36,9 +36,18 @@ class FakeL3Plugin(object):
 
     def __init__(self):
         db.configure_db({'sql_connection': 'sqlite:///:memory:'})
-        db.target_create("Private", None, description="System")
-        db.target_create("Public", None, description="System")
-        db.target_create("VPN", None, description="System")
+        try:
+            db.target_create("Private", None, description="System")
+        except:
+            pass
+        try:
+            db.target_create("Public", None, description="System")
+        except:
+            pass
+        try:
+            db.target_create("VPN", None, description="System")
+        except:
+            pass
         self.l2_plugin_ref = None
 
     def _get_subnet(self, tenant_id, subnet_id):

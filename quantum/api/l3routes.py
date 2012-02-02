@@ -101,7 +101,8 @@ class Controller(common.QuantumController):
                              exception.RouteDestinationInvalid,
                              exception.RouteTargetInvalid,
                              exception.DuplicateRoute,
-                             exception.InvalidCIDR])
+                             exception.InvalidCIDR,
+                             exception.TargetNotFound])
     def create(self, request, tenant_id, routetable_id, body):
         """ Creates a new route in a routetable for a given tenant """
         body = self._prepare_request_body(body, self._route_ops_param_list)

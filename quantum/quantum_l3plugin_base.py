@@ -266,24 +266,6 @@ class QuantumL3PluginBase(object):
         pass
 
     @abstractmethod
-    def update_route(self, tenant_id, routetable_id, route_id, **kwargs):
-        """
-        Updates the attributes of a particular routetable
-
-        :returns: a sequence of mappings with the following signature:
-                    {'routetable_id': uuid that uniquely identifies the
-                                     particular routetable,
-                     'route_id': uuid that uniquely identifies the route
-                    }
-        :raises: exception.RoutetableNotFound
-        :raises: exception.RouteNotFound
-        :raises: exception.RouteSourceInvalid
-        :raises: exception.RouteDestinationInvalid
-        :raises: exception.RouteTargetInvalid
-        """
-        pass
-
-    @abstractmethod
     def get_all_targets(self, tenant_id, routetable_id):
         """
         Returns all the targets available for this tenant_id
