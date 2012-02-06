@@ -1,0 +1,48 @@
+# -- Making requests against the Quantum L3 API
+
+  Quantum comes with a programmatic CLI that is driven by the Quantum Web
+  Service.  You can use the CLI by issuing the following command:
+
+  # If you're running from the source
+  bin/l3quantum
+
+  # If you installed Quantum
+  l3quantum
+
+  This will show help all of the available commands.
+
+$ bin/l3quantum
+Usage: l3quantum [OPTIONS] <command> [args]
+
+Options:
+  -h, --help            show this help message and exit
+  -H HOST, --host=HOST  ip address of api host
+  -p PORT, --port=PORT  api port
+  -s, --ssl             use ssl
+  -v, --verbose         turn on verbose logging
+  -f LOGFILE, --logfile=LOGFILE
+                        log file path
+  -t TOKEN, --token=TOKEN
+                        authentication token
+
+Commands:
+    list_routetables <tenant-id>
+    show_subnet <tenant-id> <subnet_id>
+    create_routetable <tenant-id>
+    list_routes <tenant-id> <routetable_id>
+    delete_subnet <tenant-id> <subnet_id>
+    delete_route <tenant-id> <routetable_id> <route_id>
+    create_route <tenant-id> <routetable_id> <source> <destination> <target>
+    show_route <tenant-id> <routetable_id> <route_id>
+    update_subnet <tenant-id> <subnet_id> <cidr>
+    list_available_targets <tenant-id> <routetable_id>
+    update_routetable <tenant-id> <routetable_id> <params>
+    create_subnet <tenant-id> <cidr>
+    associate_subnet <tenant-id> <subnet_id> <routetable_id>
+    show_subnet_association <tenant-id> <subnet_id>
+    list_subnets <tenant-id>
+    delete_routetable <tenant-id> <routetable_id>
+    show_routetable <tenant-id> <routetable_id>
+    disassociate_subnet <tenant-id> <subnet_id>
+    update_route <tenant-id> <routetable_id> <route_id> <params>
+
