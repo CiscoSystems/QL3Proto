@@ -118,7 +118,7 @@ class L3BasePlugin(QuantumL3PluginBase):
         Updates the attributes of a particular subnet.
         """
         LOG.debug("L3BasePlugin.update_subnet() called")
-        if kwargs.has_key('cidr'):
+        if 'cidr' in kwargs.keys():
             if not iputil.validate_subnet_cidr(kwargs['cidr']):
                 raise exc.InvalidCIDR(cidr=kwargs['cidr'])
         subnet = db.subnet_update(subnet_id, tenant_id, **kwargs)
@@ -223,7 +223,8 @@ class L3BasePlugin(QuantumL3PluginBase):
                                                        routetable_id))
         target = target.lower()
         l3util.validate_route_source(tenant_id, routetable_id, source)
-        l3util.validate_route_destination(tenant_id, routetable_id, destination)
+        l3util.validate_route_destination(tenant_id, routetable_id,
+                                          destination)
         l3util.validate_route_target(tenant_id, routetable_id, target)
         new_route = db.route_create(routetable_id, source, destination, target,
                                     **kwargs)

@@ -352,8 +352,8 @@ class Client(object):
         """
         return self.do_request("POST", self.routes_path % routetable,
                                body=body,
-                               exception_args=\
-                               {"source_id": body['route']['source'],
+                               exception_args={"source_id":
+                                               body['route']['source'],
                                 "cidr": "%s or %s" % \
                                 (body['route']['source'],
                                  body['route']['destination']),

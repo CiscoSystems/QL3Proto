@@ -65,7 +65,8 @@ def validate_route_destination(tenant_id, routetable_id, destination):
     tenant and the routetable. The following checks are performed:
     If the destination is the string "default", or,
     If the desintation is the IP address 0.0.0.0, or,
-    If the destination is a UUID, is it for a subnet that belongs to this tenant
+    If the destination is a UUID, is it for a subnet that belongs to this
+    tenant
     If the destination is not a UUID, check if it's a valid CIDR/IPAddress
     """
     if destination.lower() in [const.DESTINATION_DEFAULT,

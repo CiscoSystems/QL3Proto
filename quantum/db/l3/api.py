@@ -110,7 +110,6 @@ def _check_duplicate_target(tag, tenant_id):
           one()
         raise q_exc.DuplicateTarget(tenant_id=tenant_id,
                                     tag=tag)
-          
     except exc.NoResultFound:
         # this is the "normal" path
         pass
@@ -132,7 +131,6 @@ def _check_duplicate_route(routetable_id_in, source_in, destination_in,
         raise q_exc.DuplicateRoute(source=source_in,
                                    destination=destination_in,
                                    target=target_in)
-          
     except exc.NoResultFound:
         # this is the "normal" path
         pass

@@ -25,7 +25,14 @@ import logging as LOG
 
 def initialize():
     'Establish database connection and load models'
-    options = {"sql_connection": "mysql://%s:%s@%s/%s" % (conf.DB_USER,
-    conf.DB_PASS, conf.DB_HOST, conf.DB_NAME)}
+    if conf.DB_CONNECTION == 'sqlite':
+        options = {"sql_connection": "sqlite://"}
+    else:
+        options = {"sql_connection": "mysql://%s:%s@%s:%s/%s" % (conf.DB_USER,
+                                                                 conf.DB_PASS,
+                                                                 conf.DB_HOST,
+                                                                 conf.DB_PORT,
+                                                                 conf.DB_NAME)}
+
     LOG.debug("MySQL options are: %s", options)
     configure_db(options)
