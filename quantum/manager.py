@@ -15,6 +15,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 # @author: Somik Behera, Nicira Networks, Inc.
+# @author: Sumit Naiksatam, Cisco Systems, Inc.
 
 
 """
@@ -33,6 +34,7 @@ from quantum.common import utils
 from quantum.common.config import find_config_file
 from quantum.common.exceptions import ClassNotFound
 from quantum_plugin_base import QuantumPluginBase
+from quantum_l3plugin_base import QuantumL3PluginBase
 
 LOG = logging.getLogger('quantum.manager')
 CONFIG_FILE = "plugins.ini"
@@ -81,8 +83,35 @@ class QuantumManager(object):
                       "All compatibility tests passed")
         self.plugin = plugin_klass()
 
+        if not 'plugin_l3provider' in options:
+            options['plugin_l3provider'] = \
+                utils.get_l3plugin_from_config(self.configuration_file)
+        LOG.debug("Plugin location:%s", options['plugin_l3provider'])
+
+        # If the plugin can't be found let them know gracefully
+        try:
+            l3plugin_klass = utils.import_class(options['plugin_l3provider'])
+        except ClassNotFound:
+            raise Exception("Plugin not found.  You can install a " \
+                            "plugin with: pip install <plugin-name>\n" \
+                            "Example: pip install quantum-sample-plugin")
+
+        if not issubclass(l3plugin_klass, QuantumL3PluginBase):
+            raise Exception("Configured Quantum plugin " \
+                            "didn't pass L3 compatibility test")
+        else:
+            LOG.debug("Successfully imported Quantum L3 plug-in." \
+                      "All compatibility tests passed")
+        self.l3plugin = l3plugin_klass()
+
     @classmethod
     def get_plugin(cls, options=None, config_file=None):
         if cls._instance is None:
             cls._instance = cls(options, config_file)
         return cls._instance.plugin
+
+    @classmethod
+    def get_l3plugin(cls, options=None, config_file=None):
+        if cls._instance is None:
+            cls._instance = cls(options, config_file)
+        return cls._instance.l3plugin
