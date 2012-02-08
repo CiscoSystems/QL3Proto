@@ -43,6 +43,7 @@ class QuaggaClient(object):
     def add_static_route(self, destination, netmask, next_hop):
         self.conn.write("conf t\n")
         cmd = "ip route %s %s %s\n" % (destination, netmask, next_hop)
+        LOG.debug("Running command '%s'" % cmd)
         self.conn.write(cmd.encode('ascii', 'ignore'))
         self.conn.write("exit\n")
         self.conn.write("en\n")

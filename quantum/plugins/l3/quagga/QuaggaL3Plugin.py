@@ -55,6 +55,7 @@ class QuaggaL3Plugin(L3BasePlugin):
               (configfile))
         LOG.debug("Using configuration file: %s" % configfile)
         config.read(configfile)
+        self.config = config
         LOG.debug("Config: %s" % config)
         self.qclient = QuaggaClient(
                          password = config.get("TELNET", "password"),
@@ -142,19 +143,32 @@ class QuaggaL3Plugin(L3BasePlugin):
         """
         LOG.debug("QuaggaL3Plugin.create_route() called")
         source_subnet_dict = self.get_subnet_details(tenant_id, source)
-        
-        destination_subnet_dict = \
-                self.get_subnet_details(tenant_id, destination)
-        self.iptables_manager.\
-             inter_subnet_accept(source_subnet_dict[const.CIDR],
+
+        if util.strcmp_ignore_case(destination, const.DESTINATION_DEFAULT):
+            LOG.debug("Creating PUBLIC route")
+            self.iptables_manager.\
+                    subnet_public_accept(source_subnet_dict[const.CIDR],
+                                         self.config.get("INTERFACE","public"))
+            LOG.debug("Added IPTABLES rule")
+            source_details =  self._convert_cidr_notation(
+                                source_subnet_dict[const.CIDR]
+                              )
+            self.qclient.add_static_route(
+                source_details[0], 
+                source_details[1], 
+                target
+            )
+            LOG.debug("Created Quagga route")
+        else:
+            destination_subnet_dict = \
+                    self.get_subnet_details(tenant_id, destination)
+            self.iptables_manager.\
+                 inter_subnet_accept(source_subnet_dict[const.CIDR],
                                  destination_subnet_dict[const.CIDR])
-        LOG.debug("\n\nAdded iptables rule \n\n")
-        # Create quagga route
-        dest_details = self._convert_cidr_notation(
+            dest_details = self._convert_cidr_notation(
                            destination_subnet_dict[const.CIDR]
                        )
-        self.qclient.add_static_route(dest_details[0], dest_details[1], target)
-        LOG.debug("\n\nAdded quagga route\n\n")
+            self.qclient.add_static_route(dest_details[0], dest_details[1], target)
 
         route_id = None
         if "route_id" in kwargs:
