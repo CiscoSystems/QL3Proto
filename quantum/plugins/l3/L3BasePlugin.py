@@ -224,7 +224,7 @@ class L3BasePlugin(QuantumL3PluginBase):
         target = target.lower()
         l3util.validate_route_source(tenant_id, routetable_id, source)
         l3util.validate_route_destination(tenant_id, routetable_id, destination)
-        l3util.validate_route_target(tenant_id, routetable_id, target)
+        #l3util.validate_route_target(tenant_id, routetable_id, target)
         new_route = db.route_create(routetable_id, source, destination, target,
                                     **kwargs)
         return {'route_id': new_route['uuid'],
