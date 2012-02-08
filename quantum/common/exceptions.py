@@ -179,6 +179,11 @@ class RouteTargetInvalid(QuantumException):
 
 class DuplicateRoute(QuantumException):
     message = _("Route with Source:%(source)s Destination:%(destination)s " \
+                "Target:%(target)s already exists")
+
+
+class DuplicateTarget(QuantumException):
+    message = _("Target with Tag:%(tag)s Tenant-Id:%(tenant_id)s " \
                 "already exists")
 
 

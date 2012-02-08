@@ -16,7 +16,6 @@
 #    under the License.
 #
 # @author: Sumit Naiksatam, Cisco Systems, Inc.
-# @author: Rohit Agarwalla, Cisco Systems, Inc.
 """
 
 import os
@@ -32,7 +31,10 @@ Reading the conf for the l3_plugin
 """
 
 SECTION_CONF = CONF_PARSER_OBJ['DATABASE']
-DB_NAME = SECTION_CONF['name']
-DB_USER = SECTION_CONF['user']
-DB_PASS = SECTION_CONF['pass']
-DB_HOST = SECTION_CONF['host']
+DB_CONNECTION = SECTION_CONF['connection']
+if DB_CONNECTION != 'sqlite':
+    DB_NAME = SECTION_CONF['name']
+    DB_USER = SECTION_CONF['user']
+    DB_PASS = SECTION_CONF['pass']
+    DB_HOST = SECTION_CONF['host']
+    DB_PORT = SECTION_CONF['port']

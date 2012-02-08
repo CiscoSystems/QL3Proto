@@ -23,21 +23,31 @@ from quantum.plugins.l3.db import l3network_db as db
 from quantum.plugins.l3.utils import l3utils as l3util
 from quantum.plugins.l3.utils import iputils as iputil
 from quantum.plugins.l3.utils import utils as util
+from quantum.quantum_l3plugin_base import QuantumL3PluginBase
 
 
 LOG = logging.getLogger('quantum.plugins.L3BasePlugin')
 
 
-class L3BasePlugin(object):
+class L3BasePlugin(QuantumL3PluginBase):
     """
     L3BasePlugin is a base class for L3 plugins
     """
 
     def __init__(self):
         db.initialize()
-        db.target_create("Private", None, description="System")
-        db.target_create("Public", None, description="System")
-        db.target_create("VPN", None, description="System")
+        try:
+            db.target_create("Private", None, description="System")
+        except:
+            pass
+        try:
+            db.target_create("Public", None, description="System")
+        except:
+            pass
+        try:
+            db.target_create("VPN", None, description="System")
+        except:
+            pass
         self.l2_plugin_ref = None
 
     def _get_subnet(self, tenant_id, subnet_id):
@@ -108,7 +118,7 @@ class L3BasePlugin(object):
         Updates the attributes of a particular subnet.
         """
         LOG.debug("L3BasePlugin.update_subnet() called")
-        if kwargs.has_key('cidr'):
+        if 'cidr' in kwargs.keys():
             if not iputil.validate_subnet_cidr(kwargs['cidr']):
                 raise exc.InvalidCIDR(cidr=kwargs['cidr'])
         subnet = db.subnet_update(subnet_id, tenant_id, **kwargs)
@@ -211,7 +221,11 @@ class L3BasePlugin(object):
         LOG.debug("L3BasePlugin.create_route() called with, " \
                   "tenant_id: %s routetable_id: %s" % (tenant_id,
                                                        routetable_id))
+        target = target.lower()
         l3util.validate_route_source(tenant_id, routetable_id, source)
+        l3util.validate_route_destination(tenant_id, routetable_id,
+                                          destination)
+        l3util.validate_route_target(tenant_id, routetable_id, target)
         new_route = db.route_create(routetable_id, source, destination, target,
                                     **kwargs)
         return {'route_id': new_route['uuid'],
@@ -233,18 +247,6 @@ class L3BasePlugin(object):
         # Route not found
         raise exc.RouteNotFound(routetable_id=routetable_id,
                                 route_id=route_id)
-
-    def update_route(self, tenant_id, routetable_id, route_id, **kwargs):
-        """
-        Updates the attributes of a particular route.
-        """
-        LOG.debug("L3BasePlugin.update_route() called")
-        new_route = db.route_update(routetable_id, route_id, **kwargs)
-        return {'route_id': new_route['uuid'],
-                'routetable_id': new_route['routetable_id'],
-                'source': new_route['source'],
-                'destination': new_route['destination'],
-                'target': new_route['target']}
 
     def get_route_details(self, tenant_id, routetable_id, route_id):
         """
