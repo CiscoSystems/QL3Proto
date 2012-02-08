@@ -57,6 +57,7 @@ class ApiCall(object):
                 instance.format = kwargs.pop('format')
             if 'tenant' in kwargs:
                 instance.tenant = kwargs.pop('tenant')
+
             ret = self.function(instance, *args, **kwargs)
             (instance.format, instance.tenant) = (format, tenant)
             return ret
@@ -278,8 +279,6 @@ class Client(object):
         """
         Creates a new subnet
         """
-        LOG.debug("THIS IS SUBNET BODY!!!!!!!!!!!!!!")
-        LOG.debug("%s", body)
         return self.do_request("POST", self.subnets_path, body=body,
                                exception_args={"cidr": body['subnet']['cidr']})
 
@@ -353,8 +352,8 @@ class Client(object):
         """
         return self.do_request("POST", self.routes_path % routetable,
                                body=body,
-                               exception_args=\
-                               {"source_id": body['route']['source'],
+                               exception_args={"source_id":
+                                               body['route']['source'],
                                 "cidr": "%s or %s" % \
                                 (body['route']['source'],
                                  body['route']['destination']),
