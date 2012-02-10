@@ -126,7 +126,7 @@ class IptablesManager(object):
         """Allow subnet to internet traffic
         """
         self.ipv4['filter'].add_rule("l3-linux-FORWARD", \
-                                     "-s %(subnet)s -o %(p_int)s" \
+                                     "-s %(subnet)s -i %(p_int)s" \
                                      " -j ACCEPT" % {'subnet': subnet,\
                                      'p_int': public_interface},\
                                      True, "1")
@@ -135,7 +135,7 @@ class IptablesManager(object):
         """Allow subnet to internet traffic
         """
         self.ipv4['filter'].remove_rule("l3-linux-FORWARD", \
-                                     "-s %(subnet)s -o %(p_int)s" \
+                                     "-s %(subnet)s -i %(p_int)s" \
                                      " -j ACCEPT" % {'subnet': subnet,\
                                      'p_int': public_interface})
 
