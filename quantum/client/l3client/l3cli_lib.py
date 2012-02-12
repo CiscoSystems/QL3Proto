@@ -18,6 +18,8 @@
 
 """ Functions providing implementation for CLI commands. """
 
+from prettytable import PrettyTable
+
 import logging
 import os
 import sys
@@ -117,12 +119,7 @@ class CmdOutputTemplate(OutputTemplate):
                           "%(routetable_id)s\n" +
                           "for Tenant %(tenant_id)s",
         "list_routes":   "Routes for Tenant: %(tenant_id)s " +
-                         "Routetable ID: %(routetable_id)s\n" +
-                         "\tRoute-ID\tSource\tDestination\tTarget\n" +
-                         "%(routes|\t%(id)s\t" +
-                         "%(source)s\t" +
-                         "%(destination)s\t" +
-                         "%(target)s)s",
+                         "Routetable ID: %(routetable_id)s\n",
         "create_route":   "Created a new Route ID %(id)s with\n" +
                           "Source: %(source)s\n" +
                           "Destination: %(destination)s\n" +
@@ -326,12 +323,21 @@ def update_routetable(client, *args):
 def list_routes(client, *args):
     tenant_id, routetable_id = args
     try:
-        res = client.list_routes(routetable_id)
+        data = client.list_routes(routetable_id)
         LOG.debug("Operation 'list_routes' executed.")
-        data = res
         data['routetable_id'] = routetable_id
         output = prepare_output("list_routes", tenant_id, data)
         print output
+        ptbl = PrettyTable(["Route-ID", "Source", "Destination", "Target"])
+        ptbl.set_padding_width(1)
+        ptbl.set_field_align("Route-ID", "l")
+        ptbl.set_field_align("Source", "r")
+        ptbl.set_field_align("Destination", "r")
+        ptbl.set_field_align("Target", "l")
+        for row in data['routes']:
+            ptbl.add_row([row['id'], row['source'], row['destination'],
+                          row['target']])
+        print ptbl
     except Exception as ex:
         _handle_exception(ex)
 
