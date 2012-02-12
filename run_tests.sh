@@ -9,6 +9,7 @@ function usage {
   echo "  -c, --coverage           Generate coverage report"
   echo "  -f, --force              Force a clean re-build of the virtual environment. Useful when dependencies have been added."
   echo "  -p, --pep8               Just run pep8"
+  echo "  -P, --no-pep8            Don't run pep8"
   echo "  -l, --pylint             Just run pylint"
   echo "  -v, --verbose            Run verbose pylint analysis"
   echo "  -h, --help               Print this usage message"
@@ -26,6 +27,7 @@ function process_option {
     -N|--no-virtual-env) let always_venv=0; let never_venv=1;;
     -f|--force) let force=1;;
     -p|--pep8) let just_pep8=1;let never_venv=1; let always_venv=0;;
+    -P|--no-pep8) no_pep8=1;;
     -l|--pylint) let just_pylint=1; let never_venv=1; let always_venv=0;;
     -c|--coverage) coverage=1;;
     -v|--verbose) verbose=1;;
@@ -34,11 +36,12 @@ function process_option {
   esac
 }
 
-venv=.quantum-venv
+venv=.venv
 with_venv=tools/with_venv.sh
 always_venv=0
 never_venv=0
 just_pep8=0
+no_pep8=0
 just_pylint=0
 force=0
 noseargs=
@@ -96,7 +99,7 @@ function run_pep8 {
 
   PEP8_EXCLUDE="vcsversion.py,*.pyc"
   PEP8_OPTIONS="--exclude=$PEP8_EXCLUDE --repeat --show-source"
-  PEP8_INCLUDE="bin/* quantum run_tests.py setup*.py version.py"
+  PEP8_INCLUDE="bin/* quantum run_tests.py setup*.py"
   ${wrapper} pep8 $PEP8_OPTIONS $PEP8_INCLUDE
 }
 
@@ -152,7 +155,13 @@ if [ $just_pylint -eq 1 ]; then
 fi
 
 RV=0
-run_tests && run_pep8 || RV=1
+if [ $no_pep8 -eq 1 ]; then
+    run_tests
+    RV=$?
+else
+    run_tests && run_pep8 || RV=1
+fi
+
 
 if [ $coverage -eq 1 ]; then
     echo "Generating coverage report in covhtml/"

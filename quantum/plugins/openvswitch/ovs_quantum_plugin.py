@@ -41,45 +41,52 @@ LOG.getLogger("ovs_quantum_plugin")
 
 class VlanMap(object):
     vlans = {}
+    net_ids = {}
+    free_vlans = set()
 
     def __init__(self):
-        for x in xrange(2, 4094):
-            self.vlans[x] = None
+        self.vlans.clear()
+        self.net_ids.clear()
+        self.free_vlans = set(xrange(2, 4094))
 
-    def set(self, vlan_id, network_id):
+    def set_vlan(self, vlan_id, network_id):
         self.vlans[vlan_id] = network_id
+        self.net_ids[network_id] = vlan_id
 
     def acquire(self, network_id):
-        for x in xrange(2, 4094):
-            if self.vlans[x] == None:
-                self.vlans[x] = network_id
-                # LOG.debug("VlanMap::acquire %s -> %s" % (x, network_id))
-                return x
-        raise Exception("No free vlans..")
+        if len(self.free_vlans):
+            vlan = self.free_vlans.pop()
+            self.set_vlan(vlan, network_id)
+            # LOG.debug("VlanMap::acquire %s -> %s", x, network_id)
+            return vlan
+        else:
+            raise Exception("No free vlans..")
 
     def get(self, vlan_id):
-        return self.vlans[vlan_id]
+        return self.vlans.get(vlan_id, None)
 
     def release(self, network_id):
-        for x in self.vlans.keys():
-            if self.vlans[x] == network_id:
-                self.vlans[x] = None
-                # LOG.debug("VlanMap::release %s" % (x))
-                return
-        LOG.error("No vlan found with network \"%s\"" % network_id)
+        vlan = self.net_ids.get(network_id, None)
+        if vlan is not None:
+            self.free_vlans.add(vlan)
+            del self.vlans[vlan]
+            del self.net_ids[network_id]
+            # LOG.debug("VlanMap::release %s", vlan)
+        else:
+            LOG.error("No vlan found with network \"%s\"", network_id)
 
 
 class OVSQuantumPlugin(QuantumPluginBase):
 
     def __init__(self, configfile=None):
         config = ConfigParser.ConfigParser()
-        if configfile == None:
+        if configfile is None:
             if os.path.exists(CONF_FILE):
                 configfile = CONF_FILE
             else:
                 configfile = find_config(os.path.abspath(
                         os.path.dirname(__file__)))
-        if configfile == None:
+        if configfile is None:
             raise Exception("Configuration file \"%s\" doesn't exist" %
               (configfile))
         LOG.debug("Using configuration file: %s" % configfile)
@@ -97,9 +104,9 @@ class OVSQuantumPlugin(QuantumPluginBase):
             vlan_id, network_id = x
             # LOG.debug("Adding already populated vlan %s -> %s"
             #                                   % (vlan_id, network_id))
-            self.vmap.set(vlan_id, network_id)
+            self.vmap.set_vlan(vlan_id, network_id)
 
-    def get_all_networks(self, tenant_id):
+    def get_all_networks(self, tenant_id, **kwargs):
         nets = []
         for x in db.network_list(tenant_id):
             LOG.debug("Adding network: %s" % x.uuid)
@@ -160,9 +167,10 @@ class OVSQuantumPlugin(QuantumPluginBase):
                 'net-id': port.network_id,
                 'attachment': port.interface_id}
 
-    def get_all_ports(self, tenant_id, net_id):
+    def get_all_ports(self, tenant_id, net_id, **kwargs):
         ids = []
         ports = db.port_list(net_id)
+        # This plugin does not perform filtering at the moment
         return [{'port-id': str(p.uuid)} for p in ports]
 
     def create_port(self, tenant_id, net_id, port_state=None, **kwargs):

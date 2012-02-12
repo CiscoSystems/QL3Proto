@@ -1,8 +1,7 @@
-#!/usr/bin/env python
+"""
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
-
-# Copyright 2011 Nicira Neworks, Inc.
-# All Rights Reserved.
+#
+# Copyright 2012 Cisco Systems, Inc.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -15,10 +14,21 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+#
+# @author: Sumit Naiksatam, Cisco Systems, Inc.
+#
+"""
 
-import os
-import sys
-sys.path.insert(0, os.getcwd())
-import quantum.client.cli as cli
+from configobj import ConfigObj
 
-cli.main()
+
+class ConfigParser(ConfigObj):
+    """Config Parser based on the ConfigObj module"""
+
+    def __init__(self, filename):
+        super(ConfigParser, self).__init__(filename, raise_errors=True,
+                                                file_error=True)
+
+    def dummy(self, section, key):
+        """Dummy function to return the same key, used in walk"""
+        return section[key]
