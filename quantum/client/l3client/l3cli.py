@@ -39,13 +39,14 @@ from quantum.client.l3client.l3client import Client
 #Configure logger for client - cli logger is a child of it
 LOG = logging.getLogger('quantum')
 FORMAT = 'json'
+OPTIONAL_PARAMS = 'optional_params'
 commands = {
   "list_subnets": {
     "func": cli_lib.list_subnets,
     "args": ["tenant-id"]},
   "create_subnet": {
     "func": cli_lib.create_subnet,
-    "args": ["tenant-id", "cidr"]},
+    "args": ["tenant-id", "cidr", OPTIONAL_PARAMS]},
   "delete_subnet": {
     "func": cli_lib.delete_subnet,
     "args": ["tenant-id", "subnet_id"]},
@@ -109,6 +110,11 @@ def build_args(cmd, cmdargs, arglist):
     args = []
     orig_arglist = arglist[:]
     try:
+        # TODO (Sumit): This is hackish, should handle optional
+        # params in a better way
+        if OPTIONAL_PARAMS in cmdargs and \
+           len(orig_arglist) == (len(cmdargs) - 1):
+            cmdargs.remove(OPTIONAL_PARAMS)
         for x in cmdargs:
             args.append(arglist[0])
             del arglist[0]

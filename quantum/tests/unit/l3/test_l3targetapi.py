@@ -16,7 +16,7 @@
 #    @author: Atul Gaikwad, Cisco Systems, Inc.
 """Testing L3 Target API"""
 
-import quantum.api.targets as targets
+import quantum.api.l3.targets as targets
 import quantum.tests.unit.l3._test_l3targetapi as test_api
 
 

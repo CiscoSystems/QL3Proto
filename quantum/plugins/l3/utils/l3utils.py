@@ -17,7 +17,7 @@
 
 import logging
 
-from quantum.common import exceptions as exc
+from quantum.common.l3 import l3exceptions as exc
 from quantum.plugins.l3.common import constants as const
 from quantum.plugins.l3.db import l3network_db as db
 from quantum.plugins.l3.utils import iputils as iputil

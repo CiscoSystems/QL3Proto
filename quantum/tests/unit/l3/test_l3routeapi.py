@@ -1,4 +1,4 @@
-import quantum.api.l3routes as l3routes
+import quantum.api.l3.l3routes as l3routes
 import quantum.tests.unit.l3._test_l3routeapi as test_api
 
 from quantum.common.test_lib import test_config

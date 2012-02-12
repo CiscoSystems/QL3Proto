@@ -189,8 +189,16 @@ def list_subnets(client, *args):
 
 
 def create_subnet(client, *args):
-    tenant_id, cidr = args
+    param_data = {}
+    if len(args) > 2:
+        tenant_id, cidr, param_data = args
+    else:
+        tenant_id, cidr = args
     data = {'subnet': {'cidr': cidr}}
+    if param_data:
+        for kv in param_data.split(","):
+            k, v = kv.split("=")
+            data['subnet'][k] = v
     new_subnet_id = None
     try:
         res = client.create_subnet(data)

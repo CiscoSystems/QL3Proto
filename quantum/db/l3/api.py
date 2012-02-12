@@ -23,7 +23,7 @@ from sqlalchemy.orm import sessionmaker, exc
 from sqlalchemy import or_
 
 from quantum.api.api_common import OperationalStatus
-from quantum.common import exceptions as q_exc
+from quantum.common.l3 import l3exceptions as q_exc
 from quantum.db.l3 import models
 
 

@@ -1,7 +1,6 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
 # Copyright 2011 Citrix Systems.
-# Copyright 2011 Cisco Systems, Inc.
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -27,18 +26,6 @@ _PORTNOTFOUND_EXPL = 'Unable to find a port with the specified identifier.'
 _STATEINVALID_EXPL = 'Unable to update port state with specified value.'
 _PORTINUSE_EXPL = 'A resource is currently attached to the logical port'
 _ALREADYATTACHED_EXPL = 'The resource is already attached to another port'
-_SUBNETNOTFOUND_EXPL = 'Unable to find a subnet with the specified identifier'
-_INVALIDCIDR_EXPL = 'Invalid CIDR provided'
-_DUPLICATECIDR_EXPL = 'A subnet with this CIDR already exists for this tenant'
-_SUBNETALREADYASSOCIATED_EXPL = \
-        'Subnet is already associated with another Route-table'
-_ROUTETABLENOTFOUND_EXPL = \
-        'Unable to find a route table with the specified identifier'
-_ROUTENOTFOUND_EXPL = 'Unable to find a route in the route table'
-_ROUTESOURCEINVALID_EXPL = 'Unable to resolve route source identifier'
-_ROUTEDESTINATIONINVALID_EXPL = \
-        'Unable to resolve route destination identifier'
-_ROUTETARGETINVALID_EXPL = 'Unable to resolve route target identifier'
 
 
 class QuantumHTTPError(webob.exc.HTTPClientError):
@@ -74,51 +61,6 @@ class QuantumHTTPError(webob.exc.HTTPClientError):
                 'title': 'alreadyAttached',
                 'explanation': _ALREADYATTACHED_EXPL
             },
-            exceptions.SubnetNotFound: {
-                'code': 450,
-                'title': 'Subnet not Found',
-                'explanation': _SUBNETNOTFOUND_EXPL
-            },
-            exceptions.InvalidCIDR: {
-                'code': 451,
-                'title': 'Invalid CIDR',
-                'explanation': _INVALIDCIDR_EXPL
-            },
-            exceptions.DuplicateCIDR: {
-                'code': 452,
-                'title': 'Duplicate CIDR',
-                'explanation': _DUPLICATECIDR_EXPL
-            },
-            exceptions.SubnetAlreadyAssociated: {
-                'code': 453,
-                'title': 'Subnet already associated',
-                'explanation': _SUBNETALREADYASSOCIATED_EXPL
-            },
-            exceptions.RoutetableNotFound: {
-                'code': 460,
-                'title': 'Route Table not Found',
-                'explanation': _ROUTETABLENOTFOUND_EXPL
-            },
-            exceptions.RouteNotFound: {
-                'code': 465,
-                'title': 'Route not Found',
-                'explanation': _ROUTENOTFOUND_EXPL
-            },
-            exceptions.RouteSourceInvalid: {
-                'code': 466,
-                'title': 'Route Source Invalid',
-                'explanation': _ROUTESOURCEINVALID_EXPL
-            },
-            exceptions.RouteDestinationInvalid: {
-                'code': 467,
-                'title': 'Route Destination Invalid',
-                'explanation': _ROUTEDESTINATIONINVALID_EXPL
-            },
-            exceptions.RouteTargetInvalid: {
-                'code': 468,
-                'title': 'Route Target Invalid',
-                'explanation': _ROUTETARGETINVALID_EXPL
-            }
     }
 
     def __init__(self, inner_exc):

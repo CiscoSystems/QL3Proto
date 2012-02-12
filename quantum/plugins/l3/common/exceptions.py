@@ -20,7 +20,7 @@
 """
 Exceptions used by the L3 plugin
 """
-from quantum.common import exceptions
+from quantum.common.l3 import l3exceptions
 
 
 try:

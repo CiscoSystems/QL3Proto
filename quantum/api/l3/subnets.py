@@ -21,9 +21,10 @@ import logging
 from webob import exc
 
 from quantum.api import api_common as common
-from quantum.api import faults
-from quantum.api.views import subnets as subnets_view
+from quantum.api.l3 import l3faults
+from quantum.api.l3.views import subnets as subnets_view
 from quantum.common import exceptions as exception
+from quantum.common.l3 import l3exceptions as l3exception
 
 LOG = logging.getLogger('quantum.api.subnets')
 
@@ -68,13 +69,13 @@ class Controller(common.QuantumController):
         """ Returns a list of subnet ids """
         return self._items(request, tenant_id)
 
-    @common.APIFaultWrapper([exception.SubnetNotFound])
+    @common.L3APIFaultWrapper([l3exception.SubnetNotFound])
     def show(self, request, tenant_id, id):
         """ Returns subnet details for the given subnet id """
         return self._item(request, tenant_id, id,
                           subnet_details=True)
 
-    @common.APIFaultWrapper([exception.SubnetNotFound])
+    @common.L3APIFaultWrapper([l3exception.SubnetNotFound])
     def detail(self, request, **kwargs):
         tenant_id = kwargs.get('tenant_id')
         subnet_id = kwargs.get('id')
@@ -86,21 +87,21 @@ class Controller(common.QuantumController):
             # show details for all subnets
             return self._items(request, tenant_id, subnet_details=True)
 
-    @common.APIFaultWrapper([exception.InvalidCIDR, exception.DuplicateCIDR,
-                             exception.NetworkNotFound])
+    @common.L3APIFaultWrapper([l3exception.InvalidCIDR,
+                             l3exception.DuplicateCIDR])
+    @common.APIFaultWrapper([exception.NetworkNotFound])
     def create(self, request, tenant_id, body):
         """ Creates a new subnet for a given tenant """
         body = self._prepare_request_body(body, self._subnet_ops_param_list)
         LOG.debug("create() body: %s", body)
-        subnet = self._plugin.create_subnet(tenant_id,
-                                            body['subnet']['cidr'],
-                                            **body)
+        subnet = self._plugin.create_subnet(tenant_id, **body['subnet'])
         builder = subnets_view.get_view_builder(request, self.version)
         result = builder.build(subnet)['subnet']
         return dict(subnet=result)
 
-    @common.APIFaultWrapper([exception.SubnetNotFound, exception.InvalidCIDR,
-                             exception.DuplicateCIDR,
+    @common.L3APIFaultWrapper([l3exception.SubnetNotFound,
+                             l3exception.InvalidCIDR,
+                             l3exception.DuplicateCIDR,
                              exception.NetworkNotFound])
     def update(self, request, tenant_id, id, body):
         """ Updates the name for the subnet with the given id """
@@ -108,7 +109,7 @@ class Controller(common.QuantumController):
         LOG.debug("update() body: %s", body)
         self._plugin.update_subnet(tenant_id, id, **body['subnet'])
 
-    @common.APIFaultWrapper([exception.SubnetNotFound])
+    @common.L3APIFaultWrapper([l3exception.SubnetNotFound])
     def delete(self, request, tenant_id, id):
         """ Destroys the subnet with the given id """
         self._plugin.delete_subnet(tenant_id, id)

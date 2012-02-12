@@ -21,9 +21,9 @@ import logging
 from webob import exc
 
 from quantum.api import api_common as common
-from quantum.api import faults
-from quantum.api.views import l3routes as routes_view
-from quantum.common import exceptions as exception
+from quantum.api.l3 import l3faults
+from quantum.api.l3.views import l3routes as routes_view
+from quantum.common.l3 import l3exceptions as exception
 
 LOG = logging.getLogger('quantum.api.routes')
 
@@ -68,20 +68,20 @@ class Controller(common.QuantumController):
                   for route in routes]
         return dict(routes=result)
 
-    @common.APIFaultWrapper([exception.RoutetableNotFound])
+    @common.L3APIFaultWrapper([exception.RoutetableNotFound])
     def index(self, request, tenant_id, routetable_id):
         """ Returns a list of routes for this routetable """
         return self._items(request, tenant_id, routetable_id,
                            route_details=True)
 
-    @common.APIFaultWrapper([exception.RoutetableNotFound,
+    @common.L3APIFaultWrapper([exception.RoutetableNotFound,
                              exception.RouteNotFound])
     def show(self, request, tenant_id, routetable_id, id):
         """ Returns route details for the given route id """
         return self._item(request, tenant_id, routetable_id, id,
                           route_details=True)
 
-    @common.APIFaultWrapper([exception.RoutetableNotFound,
+    @common.L3APIFaultWrapper([exception.RoutetableNotFound,
                              exception.RouteNotFound])
     def detail(self, request, **kwargs):
         tenant_id = kwargs.get('tenant_id')
@@ -96,7 +96,7 @@ class Controller(common.QuantumController):
             return self._items(request, tenant_id, routetable_id,
                                route_details=True)
 
-    @common.APIFaultWrapper([exception.RoutetableNotFound,
+    @common.L3APIFaultWrapper([exception.RoutetableNotFound,
                              exception.RouteSourceInvalid,
                              exception.RouteDestinationInvalid,
                              exception.RouteTargetInvalid,
@@ -116,7 +116,7 @@ class Controller(common.QuantumController):
         result = builder.build(route, route_details=True)['route']
         return dict(route=result)
 
-    @common.APIFaultWrapper([exception.RoutetableNotFound,
+    @common.L3APIFaultWrapper([exception.RoutetableNotFound,
                              exception.RouteNotFound])
     def delete(self, request, tenant_id, routetable_id, id):
         """ Deletes the route with the specific route ID """

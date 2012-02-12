@@ -21,9 +21,9 @@ import logging
 from webob import exc
 
 from quantum.api import api_common as common
-from quantum.api import faults
-from quantum.api.views import targets as targets_view
-from quantum.common import exceptions as exception
+from quantum.api.l3 import l3faults
+from quantum.api.l3.views import targets as targets_view
+from quantum.common.l3 import l3exceptions as exception
 
 LOG = logging.getLogger('quantum.api.targets')
 

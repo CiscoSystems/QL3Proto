@@ -17,7 +17,7 @@
 
 import logging
 
-from quantum.common import exceptions as exc
+from quantum.common.l3 import l3exceptions as exc
 from quantum.plugins.l3.common import constants as const
 from quantum.plugins.l3.db import l3network_db as db
 from quantum.plugins.l3.utils import l3utils as l3util
@@ -91,11 +91,12 @@ class L3BasePlugin(QuantumL3PluginBase):
             raise exc.InvalidCIDR(cidr=cidr)
         if not self.l2_plugin_ref:
             self.l2_plugin_ref = util.get_l2_plugin_reference()
-        """
-        TODO (Sumit): Check first if the network_id is provided in kwargs
-        """
-        l2network_id = self.l2_plugin_ref.\
-                create_network(tenant_id, "subnet-" + cidr)['net-id']
+        if 'network_id' in kwargs.keys():
+            l2network_id = kwargs['network_id']
+            self.l2_plugin_ref.get_network_details(tenant_id, l2network_id)
+        else:
+            l2network_id = self.l2_plugin_ref.\
+                    create_network(tenant_id, "subnet-" + cidr)['net-id']
         new_subnet = db.subnet_create(tenant_id, cidr, l2network_id)
         # Return uuid for newly created subnetwork as subnet_id.
         return {'subnet_id': new_subnet['uuid']}

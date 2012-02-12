@@ -16,7 +16,7 @@
 #    @author: Sumit Naiksatam, Cisco Systems, Inc.
 """Testing L3 Subnet API"""
 
-import quantum.api.subnets as subnets
+import quantum.api.l3.subnets as subnets
 import quantum.tests.unit.l3._test_l3subnetapi as test_api
 
 from quantum.common.test_lib import test_config

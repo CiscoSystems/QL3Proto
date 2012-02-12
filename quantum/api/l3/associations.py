@@ -21,9 +21,9 @@ import logging
 from webob import exc
 
 from quantum.api import api_common as common
-from quantum.api import faults
-from quantum.api.views import associations as associations_view
-from quantum.common import exceptions as exception
+from quantum.api.l3 import l3faults
+from quantum.api.l3.views import associations as associations_view
+from quantum.common.l3 import l3exceptions as exception
 
 LOG = logging.getLogger('quantum.api.associations')
 
@@ -47,7 +47,7 @@ class Controller(common.QuantumController):
         self._resource_name = 'association'
         super(Controller, self).__init__(plugin)
 
-    @common.APIFaultWrapper([exception.SubnetNotFound])
+    @common.L3APIFaultWrapper([exception.SubnetNotFound])
     def get_subnet_association(self, request, tenant_id, subnet_id):
         data = self._plugin.get_subnet_association(tenant_id,
                                                      subnet_id)
@@ -55,7 +55,7 @@ class Controller(common.QuantumController):
         result = builder.build(data)['association']
         return dict(association=result)
 
-    @common.APIFaultWrapper([exception.SubnetNotFound,
+    @common.L3APIFaultWrapper([exception.SubnetNotFound,
                              exception.RoutetableNotFound,
                              exception.SubnetAlreadyAssociated])
     def associate_subnet(self, request, tenant_id, subnet_id, body):
@@ -74,7 +74,7 @@ class Controller(common.QuantumController):
         result = builder.build(data)['association']
         return dict(association=result)
 
-    @common.APIFaultWrapper([exception.SubnetNotFound,
+    @common.L3APIFaultWrapper([exception.SubnetNotFound,
                              exception.RoutetableNotFound])
     def disassociate_subnet(self, request, tenant_id, subnet_id):
         LOG.debug("disassociate_subnet() body: %s" % subnet_id)

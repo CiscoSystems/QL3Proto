@@ -16,7 +16,7 @@
 #    @author: Atul Gaikwad, Cisco Systems, Inc.
 """Testing L3 Association API"""
 
-import quantum.api.associations as associations
+import quantum.api.l3.associations as associations
 import quantum.tests.unit.l3._test_l3associationapi as test_api
 
 

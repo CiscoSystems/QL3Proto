@@ -21,6 +21,7 @@ from webob import exc
 
 from quantum import wsgi
 from quantum.api import faults
+from quantum.api.l3 import l3faults
 
 XML_NS_V10 = 'http://openstack.org/quantum/api/v1.0'
 XML_NS_V11 = 'http://openstack.org/quantum/api/v1.1'
@@ -92,6 +93,24 @@ def APIFaultWrapper(errors=None):
             except Exception as e:
                 if errors != None and type(e) in errors:
                     raise faults.QuantumHTTPError(e)
+                # otherwise just re-raise
+                raise
+        the_func.__name__ = func.__name__
+        return the_func
+
+    return wrapper
+
+
+def L3APIFaultWrapper(errors=None):
+
+    def wrapper(func, **kwargs):
+
+        def the_func(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                if errors != None and type(e) in errors:
+                    raise l3faults.QuantumHTTPError(e)
                 # otherwise just re-raise
                 raise
         the_func.__name__ = func.__name__

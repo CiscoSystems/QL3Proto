@@ -18,7 +18,7 @@
 
 import logging
 
-from quantum.common import exceptions as exc
+from quantum.common.l3 import l3exceptions as exc
 from quantum.plugins.l3.db import l3network_db as db
 
 import quantum.plugins.l3.utils.utils as util
@@ -89,8 +89,12 @@ class FakeL3Plugin(object):
                   "tenant_id: %s, cidr:%s" % (tenant_id, cidr))
         if not self.l2_plugin_ref:
             self.l2_plugin_ref = util.get_l2_plugin_reference()
-        l2network_id = self.l2_plugin_ref.\
-                create_network(tenant_id, "subnet-" + cidr)['net-id']
+        if 'network_id' in kwargs.keys():
+            l2network_id = kwargs['network_id']
+            self.l2_plugin_ref.get_network_details(tenant_id, l2network_id)
+        else:
+            l2network_id = self.l2_plugin_ref.\
+                    create_network(tenant_id, "subnet-" + cidr)['net-id']
         new_subnet = db.subnet_create(tenant_id, cidr, l2network_id)
         # Return uuid for newly created subnetwork as subnet_id.
         return {'subnet_id': new_subnet['uuid']}

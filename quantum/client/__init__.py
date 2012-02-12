@@ -34,6 +34,7 @@ EXCEPTIONS = {
     431: exceptions.StateInvalid,
     432: exceptions.PortInUseClient,
     440: exceptions.AlreadyAttachedClient}
+
 AUTH_TOKEN_HEADER = "X-Auth-Token"
 
 

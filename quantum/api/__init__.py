@@ -30,11 +30,11 @@ from quantum import manager
 from quantum.api import attachments
 from quantum.api import networks
 from quantum.api import ports
-from quantum.api import subnets
-from quantum.api import routetables
-from quantum.api import l3routes
-from quantum.api import targets
-from quantum.api import associations
+from quantum.api.l3 import subnets
+from quantum.api.l3 import routetables
+from quantum.api.l3 import l3routes
+from quantum.api.l3 import targets
+from quantum.api.l3 import associations
 from quantum.common import flags
 from quantum import wsgi
 

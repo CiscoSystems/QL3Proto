@@ -16,7 +16,7 @@
 #    @author: Shubhangi Satras, Cisco Systems, Inc.
 """ Class for Routetable API testing """
 
-import quantum.api.routetables as routetables
+import quantum.api.l3.routetables as routetables
 import quantum.tests.unit.l3._test_l3routetableapi as test_api
 
 

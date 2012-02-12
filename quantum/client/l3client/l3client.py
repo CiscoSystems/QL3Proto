@@ -22,21 +22,22 @@ import socket
 import urllib
 
 from quantum.common import exceptions
+from quantum.common.l3 import l3exceptions
 from quantum.common.serializer import Serializer
 
-LOG = logging.getLogger('quantum.client')
+LOG = logging.getLogger('quantum.l3.l3client')
 EXCEPTIONS = {
     400: exceptions.BadInputError,
     401: exceptions.NotAuthorized,
-    450: exceptions.SubnetNotFound,
-    451: exceptions.InvalidCIDR,
-    452: exceptions.DuplicateCIDR,
-    453: exceptions.SubnetAlreadyAssociated,
-    460: exceptions.RoutetableNotFound,
-    465: exceptions.RouteNotFound,
-    466: exceptions.RouteSourceInvalid,
-    467: exceptions.RouteDestinationInvalid,
-    468: exceptions.RouteTargetInvalid}
+    450: l3exceptions.SubnetNotFound,
+    451: l3exceptions.InvalidCIDR,
+    452: l3exceptions.DuplicateCIDR,
+    453: l3exceptions.SubnetAlreadyAssociated,
+    460: l3exceptions.RoutetableNotFound,
+    465: l3exceptions.RouteNotFound,
+    466: l3exceptions.RouteSourceInvalid,
+    467: l3exceptions.RouteDestinationInvalid,
+    468: l3exceptions.RouteTargetInvalid}
 
 AUTH_TOKEN_HEADER = "X-Auth-Token"
 

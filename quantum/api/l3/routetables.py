@@ -21,9 +21,9 @@ import logging
 from webob import exc
 
 from quantum.api import api_common as common
-from quantum.api import faults
-from quantum.api.views import routetables as routetables_view
-from quantum.common import exceptions as exception
+from quantum.api.l3 import l3faults
+from quantum.api.l3.views import routetables as routetables_view
+from quantum.common.l3 import l3exceptions as exception
 
 LOG = logging.getLogger('quantum.api.routetables')
 
@@ -71,12 +71,12 @@ class Controller(common.QuantumController):
         """ Returns a list of routetable ids """
         return self._items(request, tenant_id)
 
-    @common.APIFaultWrapper([exception.RoutetableNotFound])
+    @common.L3APIFaultWrapper([exception.RoutetableNotFound])
     def show(self, request, tenant_id, id):
         """ Returns routetable details for the given routetable id """
         return self._item(request, tenant_id, id, routetable_details=True)
 
-    @common.APIFaultWrapper([exception.RoutetableNotFound])
+    @common.L3APIFaultWrapper([exception.RoutetableNotFound])
     def detail(self, request, **kwargs):
         tenant_id = kwargs.get('tenant_id')
         routetable_id = kwargs.get('id')
@@ -100,7 +100,7 @@ class Controller(common.QuantumController):
         result = builder.build(routetable)['routetable']
         return dict(routetable=result)
 
-    @common.APIFaultWrapper([exception.RoutetableNotFound])
+    @common.L3APIFaultWrapper([exception.RoutetableNotFound])
     def update(self, request, tenant_id, id, body):
         """
         Updates the label and/or description for the routetable
@@ -111,7 +111,7 @@ class Controller(common.QuantumController):
         LOG.debug("update() body: %s", body)
         self._plugin.update_routetable(tenant_id, id, **body['routetable'])
 
-    @common.APIFaultWrapper([exception.RoutetableNotFound])
+    @common.L3APIFaultWrapper([exception.RoutetableNotFound])
     def delete(self, request, tenant_id, id):
         """ Destroys the routetable with the given id """
         self._plugin.delete_routetable(tenant_id, id)
