@@ -21,6 +21,7 @@ from quantum.db import api as db
 
 from quantum.plugins.l3.common import constants as const
 from quantum.plugins.l3.utils import utils as util
+from quantum.plugins.l3.utils import iputils as iputil
 from quantum.plugins.l3.L3BasePlugin import *
 from quantum.plugins.l3.utils import iptables
 
@@ -108,22 +109,6 @@ class L3LinuxGatewayPlugin(L3BasePlugin):
         Creates a new route
         """
         LOG.debug("L3LinuxGatewayPlugin.create_route() called")
-        source_subnet_dict = self.get_subnet_details(tenant_id, source)
-        """
-        TODO: For now we assume that the source is a subnet ID,
-              we need to later account for CIDR
-        """
-        if util.strcmp_ignore_case(destination, const.DESTINATION_DEFAULT)\
-           and util.strcmp_ignore_case(target, const.TARGET_PUBLIC):
-            self.iptables_manager.\
-                    subnet_public_accept(source_subnet_dict[const.CIDR],
-                                         self.public_interface)
-        if util.strcmp_ignore_case(target, const.TARGET_PRIVATE):
-            destination_subnet_dict = \
-                    self.get_subnet_details(tenant_id, destination)
-            self.iptables_manager.\
-                 inter_subnet_accept(source_subnet_dict[const.CIDR],
-                                     destination_subnet_dict[const.CIDR])
         route_id = None
         if "route_id" in kwargs:
             route_id = kwargs["route_id"]
@@ -135,7 +120,26 @@ class L3LinuxGatewayPlugin(L3BasePlugin):
                                                                destination,
                                                                target,
                                                                **kwargs)
-            return new_route_entry
+        if iputil.validate_cidr(source):
+            source_cidr = source
+        else:
+            source_subnet_dict = self.get_subnet_details(tenant_id, source)
+            source_cidr = source_subnet_dict[const.CIDR]
+        # TODO (Sumit): Also check for const.DESTINATION_DEFAULT_IP
+        if util.strcmp_ignore_case(destination, const.DESTINATION_DEFAULT)\
+           and util.strcmp_ignore_case(target, const.TARGET_PUBLIC):
+            self.iptables_manager.\
+                    subnet_public_accept(source_cidr, self.public_interface)
+        if util.strcmp_ignore_case(target, const.TARGET_PRIVATE):
+            if iputil.validate_cidr(destination):
+                destination_cidr = destination
+            else:
+                destination_subnet_dict = self.get_subnet_details(tenant_id,
+                                                                  destination)
+                destination_cidr = destination_subnet_dict[const.CIDR]
+            self.iptables_manager.\
+                 inter_subnet_accept(source_cidr, destination_cidr)
+        return new_route_entry
 
     def delete_route(self, tenant_id, routetable_id, route_id):
         """
@@ -144,20 +148,27 @@ class L3LinuxGatewayPlugin(L3BasePlugin):
         LOG.debug("L3LinuxGatewayPlugin.delete_route() called")
         route = self.get_route_details(tenant_id, routetable_id, route_id)
         source = route[const.ROUTE_SOURCE]
-        source_subnet_dict = self.get_subnet_details(tenant_id, source)
+        if iputil.validate_cidr(source):
+            source_cidr = source
+        else:
+            source_subnet_dict = self.get_subnet_details(tenant_id, source)
+            source_cidr = source_subnet_dict[const.CIDR]
         destination = route[const.ROUTE_DESTINATION]
         target = route[const.ROUTE_TARGET]
+        # TODO (Sumit): Also check for const.DESTINATION_DEFAULT_IP
         if util.strcmp_ignore_case(destination, const.DESTINATION_DEFAULT)\
            and util.strcmp_ignore_case(target, const.TARGET_PUBLIC):
             self.iptables_manager.\
-                    subnet_public_drop(source_subnet_dict[const.CIDR],
-                                       self.public_interface)
+                    subnet_public_drop(source_cidr, self.public_interface)
         if util.strcmp_ignore_case(target, const.TARGET_PRIVATE):
-            destination_subnet_dict = \
-                    self.get_subnet_details(tenant_id, destination)
+            if iputil.validate_cidr(destination):
+                destination_cidr = destination
+            else:
+                destination_subnet_dict = self.get_subnet_details(tenant_id,
+                                                                  destination)
+                destination_cidr = destination_subnet_dict[const.CIDR]
             self.iptables_manager.\
-                 inter_subnet_drop(source_subnet_dict[const.CIDR],
-                                   destination_subnet_dict[const.CIDR])
+                 inter_subnet_drop(source_cidr, destination_cidr)
 
         route_entry = super(L3LinuxGatewayPlugin, self).delete_route(tenant_id,
                                                               routetable_id,

@@ -19,9 +19,13 @@
 """Implements iptables rules using linux utilities."""
 
 
+import logging
 import subprocess
 
 from quantum.plugins.l3.utils import utils as util
+
+
+LOG = logging.getLogger(__name__)
 
 
 class IptablesRule(object):
@@ -54,6 +58,8 @@ class IptablesTable(object):
         command_string = ["iptables", "-N", name]
         util.execute_command_string(command_string)
         self.chains.add(name)
+        # TODO (Sumit): Also need to add this rule to the FORWARD table
+        # sudo iptables -I FORWARD 1 -j l3-linux-FORWARD
 
     def add_chain_restore(self, name):
         """Add chain only to a table"""
@@ -105,6 +111,8 @@ class IptablesTable(object):
         command_string = util.extend_string_list(command_string, rule)
         util.execute_command_string(command_string)
         rule = ''.join(rule.split())
+        # TODO (Sumit): The following raises and exception if no rule
+        # is present need to handle this properly in such cases as well
         self.rules.remove(IptablesRule(chain, rule))
 
     def print_rules_chain(self):
@@ -125,6 +133,9 @@ class IptablesManager(object):
     def subnet_public_accept(self, subnet, public_interface):
         """Allow subnet to internet traffic
         """
+        # TODO (Sumit): This probably needs to be:
+        # sudo iptables -I l3-linux-FORWARD 1 -s cidr  -i bridge_dev_name
+        # -o public_interface -j ACCEPT
         self.ipv4['filter'].add_rule("l3-linux-FORWARD", \
                                      "-s %(subnet)s -o %(p_int)s" \
                                      " -j ACCEPT" % {'subnet': subnet,\
@@ -134,6 +145,9 @@ class IptablesManager(object):
     def subnet_public_drop(self, subnet, public_interface):
         """Allow subnet to internet traffic
         """
+        # TODO (Sumit): This probably needs to be:
+        # sudo iptables -I l3-linux-FORWARD 1 -s cidr  -i bridge_dev_name
+        # -o public_interface -j ACCEPT
         self.ipv4['filter'].remove_rule("l3-linux-FORWARD", \
                                      "-s %(subnet)s -o %(p_int)s" \
                                      " -j ACCEPT" % {'subnet': subnet,\
@@ -239,6 +253,12 @@ class IptablesManager(object):
     def initialize(self):
         """Remove any traces of old chain
         """
+        LOG.debug("inside iptables initialize()")
+        command_string = ["sudo", "iptables", "--list", "l3-linux-FORWARD"]
+        cmd_output = util.execute_command_string(command_string)
+        if not cmd_output:
+            self.ipv4['filter'].add_chain("l3-linux-FORWARD")
+            return
         command_string = ["iptables", "-S", "-t", "filter"]
         cmd_output = util.execute_command_string(command_string)
         if cmd_output:
@@ -262,6 +282,7 @@ class IptablesManager(object):
         cmd_output = util.execute_command_string(command_string)
         restore_rule_list = [rules for rules in cmd_output.splitlines() \
                            if "l3-linux-FORWARD" in rules]
+
         for rule in restore_rule_list:
             rule_string = rule[3:]
             if rule[1] == "A":
