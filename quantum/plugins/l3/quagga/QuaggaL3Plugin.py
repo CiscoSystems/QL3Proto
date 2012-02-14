@@ -190,15 +190,22 @@ class QuaggaL3Plugin(L3BasePlugin):
         """
         LOG.debug("QuaggaL3Plugin.delete_route() called")
         route = self.get_route_details(tenant_id, routetable_id, route_id)
+
         source = route[const.ROUTE_SOURCE]
         source_subnet_dict = self.get_subnet_details(tenant_id, source)
         destination = route[const.ROUTE_DESTINATION]
         target = route[const.ROUTE_TARGET]
-        destination_subnet_dict = \
-                self.get_subnet_details(tenant_id, destination)
-        self.iptables_manager.\
-             inter_subnet_drop(source_subnet_dict[const.CIDR],
-                               destination_subnet_dict[const.CIDR])
+
+        if destination == 'default':
+           self.iptables_manager.\
+                subnet_public_drop(source_subnet_dict[const.CIDR],
+                                   target)
+        else:
+            destination_subnet_dict = \
+                    self.get_subnet_details(tenant_id, destination)
+            self.iptables_manager.\
+                inter_subnet_drop(source_subnet_dict[const.CIDR],
+                                  destination_subnet_dict[const.CIDR])
 
         net_details = self._convert_cidr_notation(
                         destination_subnet_dict[const.CIDR]
