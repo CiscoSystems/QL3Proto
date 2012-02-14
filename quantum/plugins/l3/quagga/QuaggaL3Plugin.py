@@ -147,7 +147,7 @@ class QuaggaL3Plugin(L3BasePlugin):
         if util.strcmp_ignore_case(destination, const.DESTINATION_DEFAULT):
             LOG.debug("Creating PUBLIC route")
             self.iptables_manager.\
-                    subnet_public_accept(source_subnet_dict[const.CIDR],
+                    subnet_public_accept(source_subnet_dict[const.CIDR], target,
                                          self.config.get("INTERFACE","public"))
             LOG.debug("Added IPTABLES rule")
             source_details =  self._convert_cidr_notation(
