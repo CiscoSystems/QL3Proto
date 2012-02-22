@@ -1,3 +1,9 @@
+# -- Documentation
+
+  We recommend first reading the L3 Model and API specification posted on the
+  following wiki:
+  http://wiki.openstack.org/quantum-l3
+
 # -- Making requests against the Quantum L3 API
 
   Quantum comes with a programmatic CLI that is driven by the Quantum Web
