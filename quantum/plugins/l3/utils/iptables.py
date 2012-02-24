@@ -122,22 +122,22 @@ class IptablesManager(object):
         self.ipv4 = {'filter': IptablesTable(),
                      'nat': IptablesTable()}
 
-    def subnet_public_accept(self, subnet, public_interface):
+    def subnet_public_accept(self, subnet, ingress, public_interface):
         """Allow subnet to internet traffic
         """
         self.ipv4['filter'].add_rule("l3-linux-FORWARD", \
-                                     "-s %(subnet)s -o %(p_int)s" \
-                                     " -j ACCEPT" % {'subnet': subnet,\
-                                     'p_int': public_interface},\
+                                     "-s %(subnet)s -i %(ingress)s" \
+                                     " -o %(p_int)s -j ACCEPT" % {'subnet': subnet,\
+                                     'p_int': public_interface, 'ingress' : ingress},\
                                      True, "1")
 
-    def subnet_public_drop(self, subnet, public_interface):
+    def subnet_public_drop(self, subnet, ingress, public_interface):
         """Allow subnet to internet traffic
         """
         self.ipv4['filter'].remove_rule("l3-linux-FORWARD", \
-                                     "-s %(subnet)s -o %(p_int)s" \
-                                     " -j ACCEPT" % {'subnet': subnet,\
-                                     'p_int': public_interface})
+                                     "-s %(subnet)s -i %(p_int)s" \
+                                     "-o %(p_int)s -j ACCEPT" % {'subnet': subnet,\
+                                     'p_int': public_interface, 'ingress' : ingress})
 
     def subnet_drop_all(self, subnet):
         """Deny subnet traffic
