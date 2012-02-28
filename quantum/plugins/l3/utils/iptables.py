@@ -113,7 +113,11 @@ class IptablesTable(object):
         rule = ''.join(rule.split())
         # TODO (Sumit): The following raises and exception if no rule
         # is present need to handle this properly in such cases as well
-        self.rules.remove(IptablesRule(chain, rule))
+        try:
+            self.rules.remove(IptablesRule(chain, rule))
+        except Exception as exc:
+            LOG.warning("Failed to remove rule:%s from chain:%s" % (rule,
+                                                                    chain))
 
     def print_rules_chain(self):
         """Print all the rules in a chain"""
