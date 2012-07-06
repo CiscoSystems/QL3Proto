@@ -83,12 +83,15 @@ Module Structure:
 
 Plugin Installation Instructions
 ----------------------------------
-1.  Make a backup copy of quantum/etc/plugins.ini.
+1.  Make a backup copy of quantum/etc/quantum.conf
 
-2.  Edit quantum/etc/plugins.ini and edit the "provider" entry to point
-    to the L2Network-plugin:
+2.  Edit quantum/etc/quantum.conf and edit the "core_plugin" for v2 API
 
-provider = quantum.plugins.cisco.l2network_plugin.L2Network
+core_plugin = quantum.plugins.cisco.network_plugin.PluginV2
+
+  OR for v1.1 API
+
+core_plugin = quantum.plugins.cisco.l2network_plugin.L2Network
 
 3.  Configure your OpenStack installation to use the 802.1qbh VIF driver and
     Quantum-aware scheduler by editing the /etc/nova/nova.conf file with the
@@ -374,7 +377,9 @@ result the run_tests.py script.
    Device-specific sub-plugins can be disabled by commenting out all the entries in:
        etc/quantum/plugins/cisco/cisco_plugins.ini
 
-   Execute the l2networkApi tests only using:
+   Execute the v2 API tests only using:
+	./run_tests.sh quantum.plugins.cisco.tests.unit.test_api_v2
+   Execute the v1.1 API tests only using:
        ./run_tests.sh quantum.plugins.cisco.tests.unit.test_l2networkApi
 
    If just the ucs or both ucs and the nexus plugins are configured then all the tests could be executed by
@@ -389,13 +394,16 @@ result the run_tests.py script.
    Nexus plugins.
    Device-specific plugins can be disabled by commenting out the entries in:
        etc/quantum/plugins/cisco/cisco_plugins.ini
-   Execute the test script as follows:
 
-   ./run_tests.sh quantum.plugins.cisco.tests.unit.test_l2networkApi
+   Execute the v2 API tests only using:
+	./run_tests.sh quantum.plugins.cisco.tests.unit.test_api_v2
+	   or
+       python run_tests.py quantum.plugins.cisco.tests.unit.test_api_v2
 
-   or
-
-   python run_tests.py quantum.plugins.cisco.tests.unit.test_l2networkApi
+   Execute the v1.1 API tests only using:
+       ./run_tests.sh quantum.plugins.cisco.tests.unit.test_l2networkApi
+	   or
+       python run_tests.py quantum.plugins.cisco.tests.unit.test_l2networkApi
 
 3. Specific Plugin unit test (needs environment setup as indicated in the
    pre-requisites):
