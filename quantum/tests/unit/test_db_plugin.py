@@ -279,7 +279,7 @@ class TestPortsV2(QuantumDbPluginV2TestCase):
         port_id = None
         with self.port() as port:
             port_id = port['port']['id']
-        req = self.new_show_request('port', 'json', port['port']['id'])
+        req = self.new_delete_request('port', 'json', port['port']['id'])
         res = req.get_response(self.api)
         self.assertEquals(res.status_int, 404)
 

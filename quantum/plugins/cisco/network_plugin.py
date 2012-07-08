@@ -20,14 +20,12 @@ import logging
 
 from quantum.common import exceptions as exc
 from quantum.db import db_base_plugin_v2
-from quantum.db import models_v2
 from quantum.openstack.common import importutils
 from quantum.plugins.cisco.common import cisco_constants as const
-from quantum.plugins.cisco.common import cisco_credentials as cred
+from quantum.plugins.cisco.common import cisco_credentials_v2 as cred
 from quantum.plugins.cisco.common import cisco_exceptions as cexc
 from quantum.plugins.cisco.common import cisco_utils as cutil
-from quantum.plugins.cisco.db import api as db
-from quantum.plugins.cisco.db import l2network_db as cdb
+from quantum.plugins.cisco.db import network_db_v2 as cdb
 from quantum.plugins.cisco import l2network_plugin_configuration as conf
 from quantum.quantum_plugin_base import QuantumPluginBase
 
@@ -47,12 +45,12 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
     """
     def __init__(self):
         """
-        Initializes the DB, credential store, and segmentation manager
+        Initializes the DB, and credential store.
         """
         cdb.initialize()
         cred.Store.initialize()
         self._model = importutils.import_object(conf.MODEL_CLASS)
-        self._vlan_mgr = importutils.import_object(conf.MANAGER_CLASS)
+        super(PluginV2, self).__init__()
         LOG.debug("Plugin initialization complete")
 
     def create_network(self, context, network):
@@ -62,22 +60,13 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         """
         LOG.debug("create_network() called\n")
         new_network = super(PluginV2, self).create_network(context, network)
-        tenant_id = new_network['tenant_id']
-        net_name = new_network['name']
         try:
-            vlan_id = self._get_vlan_for_tenant(tenant_id, net_name)
-            vlan_name = self._get_vlan_name(new_net_id, str(vlan_id))
-            self._invoke_device_plugins(self._func_name(), [tenant_id,
-                                                            net_name,
-                                                            new_net_id,
-                                                            vlan_name,
-                                                            vlan_id])
-            vlan_id = cdb.reserve_vlanid()
+            self._invoke_device_plugins(self._func_name(), [context,
+                                                            new_network])
+            return new_network
         except:
             super(PluginV2, self).delete_network(context, new_network['id'])
             raise
-
-        return new_network
 
     def update_network(self, context, id, network):
         """
@@ -86,11 +75,8 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         """
         LOG.debug("update_network() called\n")
         try:
-            network = self._get_network(context, id)
-            tenant_id = network['tenant_id']
-            # TODO (Sumit): Check if we want still want to pass kwargs
-            self._invoke_device_plugins(self._func_name(), [tenant_id, id,
-                                                            None])
+            self._invoke_device_plugins(self._func_name(), [context, id,
+                                                            network])
             return super(PluginV2, self).update_network(context, id, network)
         except:
             raise
@@ -101,14 +87,20 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         belonging to the specified tenant.
         """
         LOG.debug("delete_network() called\n")
+        #We first need to check if there are any ports on this network
+        with context.session.begin():
+            network = self._get_network(context, id)
+
+            filter = {'network_id': [id]}
+            ports = self.get_ports(context, filters=filter)
+            if ports:
+                raise exc.NetworkInUse(net_id=id)
+        #Network does not have any ports, we can proceed to delete
         try:
             network = self._get_network(context, id)
-            tenant_id = network['tenant_id']
-            # TODO (Sumit): Might first need to check here if there are active
-            # ports
-            self._invoke_device_plugins(self._func_name(), [tenant_id, id])
-            self._release_vlan_for_tenant(tenant_id, id)
-            cdb.remove_vlan_binding(id)
+            kwargs = {'network': network}
+            self._invoke_device_plugins(self._func_name(), [context, id,
+                                                            kwargs])
             return super(PluginV2, self).delete_network(context, id)
         except:
             raise
@@ -119,32 +111,32 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         """
         LOG.debug("create_port() called\n")
         new_port = super(PluginV2, self).create_port(context, port)
-        tenant_id = new_port['tenant_id']
-        net_id = new_port['network_id']
-        port_id_string = new_port['id']
         try:
-            self._invoke_device_plugins(self._func_name(), [tenant_id, net_id,
-                                                            port_state,
-                                                            port_id_string])
+            self._invoke_device_plugins(self._func_name(), [context, new_port])
+            return new_port
         except:
             super(PluginV2, self).delete_port(context, new_port['id'])
             raise
-
-        return new_port
 
     def delete_port(self, context, id):
         """
         Deletes a port on a specified Virtual Network
         """
         LOG.debug("delete_port() called\n")
+        """
+        TODO (Sumit): Disabling this check for now, check later
+        #Allow deleting a port only if the administrative state is down,
+        #and its operation status is also down
+        port = self._get_port(context, id)
+        if port['admin_state_up'] or port['status'] == 'ACTIVE':
+            raise exc.PortInUse(port_id=id, net_id=port['network_id'],
+                                att_id=port['device_id'])
+        """
         try:
-            port = self._get_port(context, id)
-            tenant_id = port['tenant_id']
-            net_id = port['network_id']
+            kwargs = {'port': port}
             # TODO (Sumit): Might first need to check here if port is active
-            self._invoke_device_plugins(self._func_name(), [tenant_id,
-                                                            net_id,
-                                                            id])
+            self._invoke_device_plugins(self._func_name(), [context, id,
+                                                            kwargs])
             return super(PluginV2, self).delete_port(context, id)
         except:
             raise
@@ -155,12 +147,8 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         """
         LOG.debug("update_port() called\n")
         try:
-            port = self._get_port(context, id)
-            tenant_id = port['tenant_id']
-            net_id = port['network_id']
-            # TODO (Sumit): Check if we want still want to pass kwargs
-            self._invoke_device_plugins(self._func_name(), [tenant_id, net_id,
-                                                            id, None])
+            self._invoke_device_plugins(self._func_name(), [context, id,
+                                                            port])
             return super(PluginV2, self).update_port(context, id, port)
         except:
             raise
@@ -408,7 +396,7 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         """
         All device-specific calls are delegated to the model
         """
-        return getattr(self._model, function_name)(args)
+        return getattr(self._model, function_name)(*args)
 
     def _get_vlan_for_tenant(self, tenant_id, net_name):
         """Get vlan ID"""

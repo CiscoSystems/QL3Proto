@@ -12,9 +12,9 @@
 #  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #  License for the spec
 
+import inspect
 import logging
 import os
-import unittest
 
 import mock
 import webtest
@@ -33,6 +33,7 @@ def curdir(*p):
 
 
 class APIv2TestCase(test_api_v2.APIv2TestCase):
+
     def setUp(self):
         plugin = 'quantum.plugins.cisco.network_plugin.PluginV2'
         # Create the default configurations
@@ -46,19 +47,11 @@ class APIv2TestCase(test_api_v2.APIv2TestCase):
 
         api = router.APIRouter()
         self.api = webtest.TestApp(api)
+        LOG.debug("%s.%s.%s done" % (__name__, self.__class__.__name__,
+                                     inspect.stack()[0][3]))
 
 
-class JSONV2TestCase(test_api_v2.APIv2TestCase):
-    def setUp(self):
-        plugin = 'quantum.plugins.cisco.network_plugin.PluginV2'
-        # Create the default configurations
-        args = ['--config-file', curdir('quantumv2.conf.cisco.test')]
-        config.parse(args=args)
-        # Update the plugin
-        cfg.CONF.set_override('core_plugin', plugin)
 
-        self._plugin_patcher = mock.patch(plugin, autospec=True)
-        self.plugin = self._plugin_patcher.start()
+class JSONV2TestCase(APIv2TestCase, test_api_v2.JSONV2TestCase):
 
-        api = router.APIRouter()
-        self.api = webtest.TestApp(api)
+    pass
