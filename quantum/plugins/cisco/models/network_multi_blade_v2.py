@@ -189,8 +189,12 @@ class NetworkMultiBladeV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             port_state = port['admin_state_up']
             port_id_string = port['id']
             args = [tenant_id, net_id, port_state, port_id_string]
-            return self._invoke_plugin_per_device(const.UCS_PLUGIN,
-                                                  self._func_name(), args)
+            ret_val = self._invoke_plugin_per_device(const.UCS_PLUGIN,
+                                                     self._func_name(), args)
+            new_args = [tenant_id, net_id, port['id'], port['id']]
+            self._invoke_plugin_per_device(const.UCS_PLUGIN,
+                                           "plug_interface", new_args)
+            return ret_val
         except:
             # TODO (Sumit): Check if we need to perform any rollback here
             raise
@@ -203,7 +207,7 @@ class NetworkMultiBladeV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         """Currently there is no processing required for the device plugins"""
         pass
 
-    def update_port(self, args):
+    def update_port(self, context, id, port):
         """Currently there is no processing required for the device plugins"""
         pass
 
@@ -233,40 +237,13 @@ class NetworkMultiBladeV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         """Currently there is no processing required for the device plugins"""
         pass
 
-    def delete_subnet(self, context, id):
+    def delete_subnet(self, context, id, kwargs):
         """Currently there is no processing required for the device plugins"""
         pass
 
     def get_subnets(self, context, filters=None, fields=None, verbose=None):
         """Currently there is no processing required for the device plugins"""
         pass
-
-    """
-    Device plugin specific operations
-    """
-    def plug_interface(self, args):
-        """
-        Perform this operation in the context of the configured device
-        plugins.
-        """
-        try:
-            return self._invoke_plugin_per_device(const.UCS_PLUGIN,
-                                                  self._func_name(), args)
-        except:
-            # TODO (Sumit): Check if we need to perform any rollback here
-            raise
-
-    def unplug_interface(self, args):
-        """
-        Perform this operation in the context of the configured device
-        plugins.
-        """
-        try:
-            return self._invoke_plugin_per_device(const.UCS_PLUGIN,
-                                                  self._func_name(), args)
-        except:
-            # TODO (Sumit): Check if we need to perform any rollback here
-            raise
 
     """
     Extensions' implementation in device plugins
@@ -281,9 +258,7 @@ class NetworkMultiBladeV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             raise
 
     def associate_port(self, args):
-        """
-        Get the portprofile name and the device name for the dynamic vnic
-        """
+        """Get the portprofile name and the device name for the dynamic vnic"""
         try:
             return self._invoke_inventory(const.UCS_PLUGIN, self._func_name(),
                                           args)
@@ -292,9 +267,7 @@ class NetworkMultiBladeV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             raise
 
     def detach_port(self, args):
-        """
-        Remove the association of the VIF with the dynamic vnic
-        """
+        """Remove the association of the VIF with the dynamic vnic """
         try:
             return self._invoke_plugin_per_device(const.UCS_PLUGIN,
                                                   self._func_name(), args)
@@ -303,7 +276,10 @@ class NetworkMultiBladeV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             raise
 
     def create_multiport(self, args):
-        """Support for extension  API call"""
+        """
+        Makes a call to the UCS device plugin to create ports on the same
+        host.
+        """
         try:
             self._invoke_plugin_per_device(const.UCS_PLUGIN, self._func_name(),
                                            args)

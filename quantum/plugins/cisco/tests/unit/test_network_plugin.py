@@ -68,22 +68,7 @@ class TestV2HTTPResponse(NetworkPluginV2TestCase,
 
 class TestPortsV2(NetworkPluginV2TestCase, test_db_plugin.TestPortsV2):
 
-    def test_mac_exhaustion(self):
-        # rather than actually consuming all MAC (would take a LONG time)
-        # we just raise the exception that would result.
-        @staticmethod
-        def fake_gen_mac(context, net_id):
-            raise q_exc.MacAddressGenerationFailure(net_id=net_id)
-
-        fmt = 'json'
-        with mock.patch.object(quantum.plugins.cisco.network_plugin.PluginV2,
-                               '_generate_mac', new=fake_gen_mac):
-            res = self._create_network(fmt=fmt, name='net1',
-                                       admin_status_up=True)
-            network = self.deserialize(fmt, res)
-            net_id = network['network']['id']
-            res = self._create_port(fmt, net_id=net_id)
-            self.assertEquals(res.status_int, 503)
+    pass
 
 
 class TestNetworksV2(NetworkPluginV2TestCase, test_db_plugin.TestNetworksV2):

@@ -20,6 +20,7 @@ import logging
 
 from quantum.common import exceptions as exc
 from quantum.db import db_base_plugin_v2
+from quantum.db import models_v2
 from quantum.openstack.common import importutils
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_credentials_v2 as cred
@@ -36,9 +37,8 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
     """
     Plugin with v2 API support for multiple sub-plugins
     """
-    supported_extension_aliases = ["Cisco Multiport", "Cisco Credential",
-                                   "Cisco Port Profile", "Cisco qos",
-                                   "Cisco Nova Tenant"]
+    supported_extension_aliases = ["Cisco Credential", "Cisco Port Profile",
+                                   "Cisco qos", "Cisco Nova Tenant"]
 
     """
     Core API implementation
@@ -95,6 +95,7 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
             ports = self.get_ports(context, filters=filter)
             if ports:
                 raise exc.NetworkInUse(net_id=id)
+        context.session.close()
         #Network does not have any ports, we can proceed to delete
         try:
             network = self._get_network(context, id)
@@ -120,14 +121,14 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
 
     def delete_port(self, context, id):
         """
-        Deletes a port on a specified Virtual Network
+        Deletes a port
         """
         LOG.debug("delete_port() called\n")
+        port = self._get_port(context, id)
         """
         TODO (Sumit): Disabling this check for now, check later
         #Allow deleting a port only if the administrative state is down,
         #and its operation status is also down
-        port = self._get_port(context, id)
         if port['admin_state_up'] or port['status'] == 'ACTIVE':
             raise exc.PortInUse(port_id=id, net_id=port['network_id'],
                                 att_id=port['device_id'])
@@ -143,13 +144,61 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
 
     def update_port(self, context, id, port):
         """
-        Updates the state of a port on the specified Virtual Network.
+        Updates the state of a port and returns the updated port
         """
         LOG.debug("update_port() called\n")
         try:
             self._invoke_device_plugins(self._func_name(), [context, id,
                                                             port])
             return super(PluginV2, self).update_port(context, id, port)
+        except:
+            raise
+
+    def create_subnet(self, context, subnet):
+        """
+        Create a subnet, which represents a range of IP addresses
+        that can be allocated to devices.
+        """
+        LOG.debug("create_subnet() called\n")
+        new_subnet = super(PluginV2, self).create_subnet(context, subnet)
+        try:
+            self._invoke_device_plugins(self._func_name(), [context,
+                                                            new_subnet])
+            return new_subnet
+        except:
+            super(PluginV2, self).delete_subnet(context, new_subnet['id'])
+            raise
+
+    def update_subnet(self, context, id, subnet):
+        """
+        Updates the state of a subnet and returns the updated subnet
+        """
+        LOG.debug("update_subnet() called\n")
+        try:
+            self._invoke_device_plugins(self._func_name(), [context, id,
+                                                            subnet])
+            return super(PluginV2, self).update_subnet(context, id, subnet)
+        except:
+            raise
+
+    def delete_subnet(self, context, id):
+        """
+        Deletes a subnet
+        """
+        LOG.debug("delete_subnet() called\n")
+        with context.session.begin():
+            subnet = self._get_subnet(context, id)
+            # Check if ports are using this subnet
+            allocated_qry = context.session.query(models_v2.IPAllocation)
+            allocated = allocated_qry.filter_by(subnet_id=id).all()
+            if allocated:
+                raise exc.SubnetInUse(subnet_id=id)
+        context.session.close()
+        try:
+            kwargs = {'subnet': subnet}
+            self._invoke_device_plugins(self._func_name(), [context, id,
+                                                            kwargs])
+            return super(PluginV2, self).delete_subnet(context, id)
         except:
             raise
 
@@ -367,28 +416,6 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
                                                                instance_id,
                                                                instance_desc])
 
-    def create_multiport(self, tenant_id, net_id_list, port_state, ports_desc):
-        """
-        Creates multiple ports on the specified Virtual Network.
-        """
-        LOG.debug("create_ports() called\n")
-        ports_num = len(net_id_list)
-        ports_id_list = []
-        ports_dict_list = []
-
-        for net_id in net_id_list:
-            db.validate_network_ownership(tenant_id, net_id)
-            port = db.port_create(net_id, port_state)
-            ports_id_list.append(port[const.UUID])
-            port_dict = {const.PORT_ID: port[const.UUID]}
-            ports_dict_list.append(port_dict)
-
-        self._invoke_device_plugins(self._func_name(), [tenant_id,
-                                                        net_id_list,
-                                                        ports_num,
-                                                        ports_id_list])
-        return ports_dict_list
-
     """
     Private functions
     """
@@ -397,19 +424,6 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         All device-specific calls are delegated to the model
         """
         return getattr(self._model, function_name)(*args)
-
-    def _get_vlan_for_tenant(self, tenant_id, net_name):
-        """Get vlan ID"""
-        return self._vlan_mgr.reserve_segmentation_id(tenant_id, net_name)
-
-    def _release_vlan_for_tenant(self, tenant_id, net_id):
-        """Relase VLAN"""
-        return self._vlan_mgr.release_segmentation_id(tenant_id, net_id)
-
-    def _get_vlan_name(self, net_id, vlan):
-        """Getting the vlan name from the tenant and vlan"""
-        vlan_name = conf.VLAN_NAME_PREFIX + vlan
-        return vlan_name
 
     def _func_name(self, offset=0):
         """Getting the name of the calling funciton"""
