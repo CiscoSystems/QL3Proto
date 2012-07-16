@@ -51,7 +51,6 @@ class APIv2TestCase(test_api_v2.APIv2TestCase):
                                      inspect.stack()[0][3]))
 
 
-
 class JSONV2TestCase(APIv2TestCase, test_api_v2.JSONV2TestCase):
 
     pass

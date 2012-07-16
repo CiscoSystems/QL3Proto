@@ -38,6 +38,9 @@ def curdir(*p):
 class NetworkPluginV2TestCase(test_db_plugin.QuantumDbPluginV2TestCase):
 
     def setUp(self):
+        db._ENGINE = None
+        db._MAKER = None
+
         self._tenant_id = 'test-tenant'
 
         json_deserializer = JSONDeserializer()
@@ -57,6 +60,9 @@ class NetworkPluginV2TestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                      inspect.stack()[0][3]))
 
     def tearDown(self):
+        db._ENGINE = None
+        db._MAKER = None
+
         cfg.CONF.reset()
 
 
@@ -79,4 +85,3 @@ class TestNetworksV2(NetworkPluginV2TestCase, test_db_plugin.TestNetworksV2):
 class TestSubnetsV2(NetworkPluginV2TestCase, test_db_plugin.TestSubnetsV2):
 
     pass
-

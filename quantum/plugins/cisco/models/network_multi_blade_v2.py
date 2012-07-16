@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
+# @author: Sumit Naiksatam, Cisco Systems, Inc.
 
 from copy import deepcopy
 import inspect
@@ -166,9 +167,11 @@ class NetworkMultiBladeV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             # ports
             output = []
             ucs_output = self._invoke_plugin_per_device(const.UCS_PLUGIN,
-                                                    self._func_name(), args)
+                                                        self._func_name(),
+                                                        args)
             nexus_output = self._invoke_plugin_per_device(const.NEXUS_PLUGIN,
-                                                      self._func_name(), args)
+                                                          self._func_name(),
+                                                          args)
             output.extend(ucs_output or [])
             output.extend(nexus_output or [])
             self._vlan_mgr.release_segmentation_id(tenant_id, id)

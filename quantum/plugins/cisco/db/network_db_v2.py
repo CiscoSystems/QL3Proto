@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
+# @author: Rohit Agarwalla, Cisco Systems, Inc.
 
 import logging as LOG
 from sqlalchemy.orm import exc
@@ -319,7 +320,7 @@ def add_pp_binding(tenantid, portid, ppid, default):
                                                     port_id=portid)
     except exc.NoResultFound:
         binding = network_models_v2.PortProfileBinding(tenantid, portid,
-                                                      ppid, default)
+                                                       ppid, default)
         session.add(binding)
         session.flush()
         return binding
@@ -484,7 +485,7 @@ def add_credential(tenant_id, credential_name, user_name, password):
                                             tenant_id=tenant_id)
     except exc.NoResultFound:
         cred = network_models_v2.Credential(tenant_id, credential_name,
-                                           user_name, password)
+                                            user_name, password)
         session.add(cred)
         session.flush()
         return cred
