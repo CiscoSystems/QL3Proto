@@ -44,8 +44,8 @@ class UCSInventory(cisco_ucs_inventory_v2.UCSInventory):
     """
 
     def __init__(self):
-        fake_ucs_driver = "quantum.plugins.cisco.tests.unit.v2.ucs." +
-        "fake_ucs_driver.CiscoUCSMFakeDriver"
+        fake_ucs_driver = "quantum.plugins.cisco.tests.unit.v2.ucs." + \
+                          "fake_ucs_driver.CiscoUCSMFakeDriver"
         self._client = importutils.import_object(fake_ucs_driver)
         conf_parser = confp.CiscoConfigParser(curdir("fake_ucs_inventory.ini"))
 

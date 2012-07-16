@@ -29,8 +29,7 @@ class PortBinding(BASE, L2NetworkBase):
     __tablename__ = 'port_bindings'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    port_id = Column(String(255), ForeignKey("ports.id"),
-                     nullable=False)
+    port_id = Column(String(255), nullable=False)
     blade_intf_dn = Column(String(255), nullable=False)
     portprofile_name = Column(String(255))
     vlan_name = Column(String(255))
@@ -39,7 +38,6 @@ class PortBinding(BASE, L2NetworkBase):
     tenant_id = Column(String(255))
     instance_id = Column(String(255))
     vif_id = Column(String(255))
-    ports = relation(models.Port, uselist=False)
 
     def __init__(self, port_id, blade_intf_dn, portprofile_name,
                  vlan_name, vlan_id, qos):
