@@ -39,7 +39,8 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
     Plugin with v2 API support for multiple sub-plugins
     """
     supported_extension_aliases = ["Cisco Credential", "Cisco Port Profile",
-                                   "Cisco qos", "Cisco Nova Tenant"]
+                                   "Cisco qos", "Cisco Nova Tenant",
+                                   "Cisco Multiport"]
 
     """
     Core API implementation
@@ -417,6 +418,28 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         return self._invoke_device_plugins(self._func_name(), [tenant_id,
                                                                instance_id,
                                                                instance_desc])
+
+    def create_multiport(self, tenant_id, net_id_list, port_state, ports_desc):
+        """
+        Creates multiple ports on the specified Virtual Network.
+        """
+        LOG.debug("create_ports() called\n")
+        ports_num = len(net_id_list)
+        ports_id_list = []
+        ports_dict_list = []
+
+        for net_id in net_id_list:
+            db.validate_network_ownership(tenant_id, net_id)
+            port = db.port_create(net_id, port_state)
+            ports_id_list.append(port[const.UUID])
+            port_dict = {const.PORT_ID: port[const.UUID]}
+            ports_dict_list.append(port_dict)
+
+        self._invoke_device_plugins(self._func_name(), [tenant_id,
+                                                        net_id_list,
+                                                        ports_num,
+                                                        ports_id_list])
+        return ports_dict_list
 
     """
     Private functions
