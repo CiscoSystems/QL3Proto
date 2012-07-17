@@ -29,7 +29,7 @@ class CiscoUCSMFakeDriver():
     def _get_blade_interfaces(self, chassis_number, blade_number, ucsm_ip,
                               ucsm_username, ucsm_password):
         blade_interfaces = {}
-        for element in range(10):
+        for element in range(20):
             dist_name = "dn" + str(element)
             if dist_name:
                 order = str(element)

@@ -23,10 +23,10 @@ from quantum.api.v2.router import APIRouter
 from quantum.common import config
 from quantum.common import exceptions as q_exc
 from quantum.db import api as db
+from quantum.plugins.cisco.db import network_models_v2
 from quantum.openstack.common import cfg
 from quantum.tests.unit import test_db_plugin
 from quantum.wsgi import JSONDeserializer
-
 
 LOG = logging.getLogger(__name__)
 
@@ -60,6 +60,7 @@ class NetworkPluginV2TestCase(test_db_plugin.QuantumDbPluginV2TestCase):
                                      inspect.stack()[0][3]))
 
     def tearDown(self):
+        db.clear_db(network_models_v2.model_base.BASEV2)
         db._ENGINE = None
         db._MAKER = None
 

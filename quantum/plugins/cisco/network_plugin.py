@@ -100,7 +100,7 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         #Network does not have any ports, we can proceed to delete
         try:
             network = self._get_network(context, id)
-            kwargs = {'network': network}
+            kwargs = {'network': network, 'base_plugin_ref': self}
             self._invoke_device_plugins(self._func_name(), [context, id,
                                                             kwargs])
             return super(PluginV2, self).delete_network(context, id)

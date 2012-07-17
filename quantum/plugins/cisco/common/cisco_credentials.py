@@ -1,6 +1,6 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
-# Copyright 2011 Cisco Systems, Inc.  All rights reserved.
+# Copyright 2012 Cisco Systems, Inc.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -22,7 +22,7 @@ from quantum.common.utils import find_config_file
 from quantum.plugins.cisco.common import cisco_configparser as confp
 from quantum.plugins.cisco.common import cisco_constants as const
 from quantum.plugins.cisco.common import cisco_exceptions as cexc
-from quantum.plugins.cisco.db import l2network_db as cdb
+from quantum.plugins.cisco.db import network_db_v2 as cdb
 
 
 LOG.basicConfig(level=LOG.WARN)
