@@ -100,7 +100,8 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
         #Network does not have any ports, we can proceed to delete
         try:
             network = self._get_network(context, id)
-            kwargs = {'network': network, 'base_plugin_ref': self}
+            kwargs = {const.NETWORK: network,
+                      const.BASE_PLUGIN_REF: self}
             self._invoke_device_plugins(self._func_name(), [context, id,
                                                             kwargs])
             return super(PluginV2, self).delete_network(context, id)
@@ -135,7 +136,7 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
                                 att_id=port['device_id'])
         """
         try:
-            kwargs = {'port': port}
+            kwargs = {const.PORT: port}
             # TODO (Sumit): Might first need to check here if port is active
             self._invoke_device_plugins(self._func_name(), [context, id,
                                                             kwargs])
@@ -196,7 +197,7 @@ class PluginV2(db_base_plugin_v2.QuantumDbPluginV2):
                 raise exc.SubnetInUse(subnet_id=id)
         context.session.close()
         try:
-            kwargs = {'subnet': subnet}
+            kwargs = {const.SUBNET: subnet}
             self._invoke_device_plugins(self._func_name(), [context, id,
                                                             kwargs])
             return super(PluginV2, self).delete_subnet(context, id)
