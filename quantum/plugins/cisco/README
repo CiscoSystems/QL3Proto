@@ -86,6 +86,7 @@ mysql -u<mysqlusername> -p<mysqlpassword> -e "create database quantum_l2network"
     4a.  Uncomment the nexus_plugin property in
          etc/quantum/plugins/cisco/cisco_plugins.ini to read:
 
+[PLUGINS]
 nexus_plugin=quantum.plugins.cisco.nexus.cisco_nexus_plugin_v2.NexusPlugin
 
     4b.  Enter the relevant configuration in the
@@ -118,10 +119,13 @@ name=quantum.plugins.cisco.nexus.cisco_nexus_network_driver.CiscoNEXUSDriver
 5.  If your are using UCS blade servers with M81KR Virtual Interface Cards and 
     want to leverage the VM-FEX features,
 
-    5a.  Uncomment the ucs_plugin property in
+    5a.  Uncomment the ucs_plugin propertes in
          etc/quantum/plugins/cisco/cisco_plugins.ini to read:
 
+[PLUGINS]
 ucs_plugin=quantum.plugins.cisco.ucs.cisco_ucs_plugin_v2.UCSVICPlugin
+[INVENTORY]
+ucs_plugin=quantum.plugins.cisco.ucs.cisco_ucs_inventory_v2.UCSInventory
 
     5b.  Enter the relevant configuration in the
          etc/quantum/plugins/cisco/ucs.ini file.  Example:
@@ -296,7 +300,10 @@ name=quantum.plugins.cisco.nexus.cisco_nexus_network_driver.CiscoNEXUSDriver
 ucs_plugin=quantum.plugins.cisco.ucs.cisco_ucs_plugin_v2.UCSVICPlugin
 
    In the [INVENTORY] section add:
+   When not using UCS hardware:
 ucs_plugin=quantum.plugins.cisco.tests.unit.v2.ucs.cisco_ucs_inventory_fake.UCSInventory
+   Or when using UCS hardware:
+ucs_plugin=quantum.plugins.cisco.ucs.cisco_ucs_inventory_v2.UCSInventory
 
    Edit the etc/quantum/plugins/cisco/ucs.ini file.
    When not using UCS hardware:
