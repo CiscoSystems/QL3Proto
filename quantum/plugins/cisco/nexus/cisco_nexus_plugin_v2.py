@@ -93,8 +93,8 @@ class NexusPlugin(L2DevicePluginBase):
         from the relevant interfaces
         """
         LOG.debug("NexusPlugin:delete_network() called\n")
-        context = kwargs["context"]
-        base_plugin_ref = kwargs["base_plugin_ref"]
+        context = kwargs[const.CONTEXT]
+        base_plugin_ref = kwargs[const.BASE_PLUGIN_REF]
         vlan_id = self._get_vlan_id_for_network(tenant_id, net_id,
                                                 context, base_plugin_ref)
         ports_id = nxos_db.get_nexusport_binding(vlan_id)
