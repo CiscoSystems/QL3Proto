@@ -107,19 +107,17 @@ class NetworkMultiBladeV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
         Invokes the relevant function on a device plugin's
         implementation for completing this operation.
         """
-        new_args = []
         func = getattr(self._plugins[plugin_key], function_name)
-
-        # If there are more args than needed, add them to kwargs
-        num_arg = args.__len__() 
-        i = 0
-        for i in range(num_arg): 
-            new_args.append(args[i])
-        
-        if (args.__len__() + 1) > inspect.getargspec(func).args.__len__():
-            kwargs.update(new_args.pop())
-
-        return func(*new_args, **kwargs)
+        func_args_len = int(inspect.getargspec(func).args.__len__()) - 1
+        if args.__len__() > func_args_len:
+            func_args = args[:func_args_len]
+            extra_args = args[func_args_len:]
+            for dict_arg in extra_args:
+                for k, v in dict_arg.iteritems():
+                    kwargs[k] = v
+            return func(*func_args, **kwargs)
+        else:
+            return func(*args, **kwargs)
 
     def create_network(self, context, network):
         """
@@ -168,8 +166,8 @@ class NetworkMultiBladeV2(quantum_plugin_base_v2.QuantumPluginBaseV2):
             base_plugin_ref = kwargs['base_plugin_ref']
             n = kwargs['network']
             tenant_id = n['tenant_id']
-            args = [tenant_id, id, {"context":context,
-                                    "base_plugin_ref":base_plugin_ref}]
+            args = [tenant_id, id, {'context':context},
+                    {'base_plugin_ref':base_plugin_ref}]
             # TODO (Sumit): Might first need to check here if there are active
             # ports
             output = []
